@@ -92,7 +92,7 @@ Do **not** leave the sensor on I2C1. I2C1 stays powered in deep sleep (fuel gaug
 ## Assembly (one sitting, no soldering if the wing has sockets)
 
 1. Update CircuitPython from [circuitpython.org](https://circuitpython.org/downloads?q=unexpected+maker) if the shipping build is old. Confirm `board.I2C2`, `board.LDO2`, `board.D9` exist (`dir(board)` in the REPL).
-2. Identify **I2C2** on the Feather (near USB). Plug the **100 mm** STEMMA cable there. 50 mm is likely too short once the wing is on.
+2. Identify **I2C2** on the Feather (near USB). Plug the **100 mm** STEMMA cable there.
 3. Check LiPo polarity against the JST-PH silkscreen. Seat the 400 mAh cell in the header well. Use the wing’s **normal-height** sockets, not shorty headers.
 4. Stack the eInk FeatherWing. Route the STEMMA cable out the side through the battery gap.
 5. Leave the PMSA003I **beside** the stack, vents unobstructed. Do not sandwich it.

@@ -17,7 +17,7 @@ Key requirements that emerged:
 | 1 | **FeatherS3[D] ESP32-S3** (Unexpected Maker) | 6399 | $24.95 |
 | 1 | **2.9" Grayscale eInk FeatherWing** | 4777 | $22.50 |
 | 1 | **PMSA003I Air Quality Breakout** | 4632 | $44.95 |
-| 1 | **STEMMA QT cable** (50 mm or 100 mm) | 4399 / 4210 | ~$0.95 |
+| 1 | **STEMMA QT cable** (100 mm) | 4210 | $0.95 |
 | 1 | **400 mAh LiPo battery** (Feather-sized) | 3898 | $6.95 |
 
 **Approximate total: ~$100**
