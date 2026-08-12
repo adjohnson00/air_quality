@@ -1,0 +1,522 @@
+<!doctype html>
+<html class="no-js" lang="en">
+
+<head>
+	<meta charset="utf-8">
+	
+	<!--====== Title ======-->
+	<title>ESP32-S3 - The new flagship MCU from Espressif</title>
+	
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<!--====== Favicon Icon ======-->
+	<link rel="shortcut icon" href="assets/images/favicon.png" type="image/png">
+		
+	<!--====== Magnific Popup CSS ======-->
+	<link rel="stylesheet" href="assets/css/magnific-popup.css">
+		
+	<!--====== Slick CSS ======-->
+	<link rel="stylesheet" href="assets/css/slick.css">
+		
+	<!--====== Line Icons CSS ======-->
+	<link rel="stylesheet" href="assets/css/LineIcons.css">
+		
+	<!--====== Bootstrap CSS ======-->
+	<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+	
+	<!--====== Default CSS ======-->
+	<link rel="stylesheet" href="assets/css/default.css">
+	
+	<!--====== Style CSS ======-->
+	<link rel="stylesheet" href="assets/css/style.css">
+	
+</head>
+
+<body>
+	<!--[if IE]>
+	<p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
+  <![endif]-->
+   
+	<!--====== PRELOADER PART START ======-->
+
+	<div class="preloader">
+		<div class="loader">
+			<div class="ytp-spinner">
+				<div class="ytp-spinner-container">
+					<div class="ytp-spinner-rotator">
+						<div class="ytp-spinner-left">
+							<div class="ytp-spinner-circle"></div>
+						</div>
+						<div class="ytp-spinner-right">
+							<div class="ytp-spinner-circle"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!--====== PRELOADER PART ENDS ======-->
+	
+	<section class="navbar-area" >
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-12">
+					<nav class="navbar navbar-expand-lg">
+					   
+						<a class="navbar-brand" href="/">
+							<img src="images/logo_esp32s3_white.svg" alt="Logo" style="height:50px;">
+						</a>
+						
+						<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTwo" aria-controls="navbarTwo" aria-expanded="false" aria-label="Toggle navigation">
+							<span class="toggler-icon"></span>
+							<span class="toggler-icon"></span>
+							<span class="toggler-icon"></span>
+						</button>
+
+						<div class="collapse navbar-collapse sub-menu-bar" id="navbarTwo">
+							<ul class="navbar-nav m-auto">
+								<li class="nav-item"><a class="page-scroll" href="/index.html#esp32s3_info">ESP32-S3</a></li>
+								<li class="nav-item"><a class="page-scroll" href="/index.html#boards">Boards</a></li>
+								<li class="nav-item"><a class="page-scroll" href="/index.html#faq">FAQ</a></li>
+								<li class="nav-item active"><a class="page-scroll" href="/getting-started.html">Getting Started</a></li>
+								<li class="nav-item"><a href="https://help.unexpectedmaker.com" target="_blank">HELP</a></li>
+<!-- 								<li class="nav-item"><a class="page-scroll" href="/coding-examples.html">Coding Examples</a></li> -->
+								<li class="nav-item"><a class="page-scroll" href="#contact">Contact</a></li>
+							</ul>
+						</div>
+						
+						<div class="navbar-btn">
+							<ul>
+								<li><a class="solid" href="/index.html#buy">BUY</a></li>
+							</ul>
+						</div>
+					</nav> <!-- navbar -->
+				</div>
+			</div> <!-- row -->
+		</div> <!-- container -->
+	</section>
+
+		
+	<section class="slider_area">
+		<div id="carouselThree" class="carousel slide" data-ride="carousel">
+
+			<div class="carousel-inner">
+				<div class="carousel-item active">
+					<div class="container">
+						<div class="row">
+							<div class="col-lg-12">
+								<div class="slider-content">
+									<span class="title">Getting Started</span>
+
+								</div>
+							</div>
+
+						</div> <!-- row -->
+					</div> <!-- container -->
+
+				</div> <!-- carousel-item -->
+			  
+
+			</div>
+		</div>
+	</section>
+	
+	
+	<section id="top" class="about-area">
+		<div class="container">
+			<div class="row justify-content-center">
+				<div class="col-12">
+					<div class="section-title text-center pb-1">
+						<h2 class="sub-title mt-4">Congratulations!</h2>
+						<p class="text mb-2">If you are visiting this page, it’s likely you are a proud owner of a new Unexpected Maker ESP32-S3 board - congratulations!</p>
+						<p class="text mb-3">We’ve put together this getting started guide to help you get familiar with your new ESP32-S3 board, and showcase some of the main features of the boards.</p>
+					</div>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<div class="col-1"></div>
+				<div  class="info-box col-10 text-center p-3">							
+					<p class="text m-0 p-0">If you don’t already own a ESP32-S3 board from Unexpected Maker, you can <a class="solid" href="/index.html#buy">buy one from here</a>!</p>
+				</div>
+				<div class="col-1"></div>
+			</div>
+		</div>
+	</section>
+	
+
+								
+
+	
+	<section id="features">
+		<div class="container">
+			<div class="row justify-content-top" style="text-align:top;">
+				<div class="d-none d-lg-block col-lg-2">
+					<div style="position: fixed;">
+						<a href='#top' class="page-scroll" style="color:#009C53;"><button class="btn btn-sm btn-outline-success m-1" style="width:140px;">HOOKUP!</button></a>
+						<br>
+						<a href='#platforms' class="page-scroll" style="color:#009C53;"><button class="btn btn-sm btn-outline-success m-1" style="width:140px;">PLATFORMS</button></a>
+						<br>
+						<a href='#reflashing' class="page-scroll" style="color:#009C53;"><button class="btn btn-sm btn-outline-success m-1" style="width:140px;">FLASHING CODE</button></a>
+						<br>
+						<a href='#battery' class="page-scroll" style="color:#009C53;"><button class="btn btn-sm btn-outline-success m-1" style="width:140px;">BATTERY</button></a>
+						<br>
+						<a href='#helper' class="page-scroll" style="color:#009C53;"><button class="btn btn-sm btn-outline-success m-1" style="width:140px;">HELPERS</button></a>
+						<br>
+						<a href='https://help.unexpectedmaker.com' style="color:#00639c;"><button class="btn btn-sm btn-outline-success m-1" style="width:140px;">KNOWLEDGE BASE</button></a>
+						<br>
+					</div>
+				</div>
+				<div class="col-12 col-lg-10">
+					<div class="row justify-content-center">
+						<div class="col-12">
+							<div class="section-title text-left pb-1">
+								<h3 class="title mt-2">Hooking it up!</h3>
+								<p class="text mb-2">All you need to do to get started is to plug your board into your computer using a USB-C Power + Data cable.</p>
+		
+								<p class="text mb-2">Your ESP32-S3 board ships with CircuitPython pre-installed and has some hello world code on it that runs when you power it up.</p>
+								
+								<p class="text mb-2">Once it starts up, you'll see a USB drive appear in your filesystem called <strong>CIRCUITPY</strong> and on the drive, you'll find a file named <strong>code.py</strong> that is currently running on your board. If you are new to CircuitPython, or would like to level up your CircuitPython skills, please check out Adafruit's <a href="https://learn.adafruit.com/welcome-to-circuitpython" target="_blank">Welcome to CircuitPython</a> learn guide.</p>
+								
+								<!-- <div class="info-box p-3 m-2">
+								
+									<span style="font-size: 20px;">Regarding CircuitPython, Please Note!</span>
+									
+									<p class="text m-0 p-0">The ESP32-S3 is brand spanking new, and support for the MCU in CircuitPython (and other development environments) is still early. The version of CircuitPython that ships on your new board might have some unknown bugs or be missing some of the newer features of the ESP32-S3. Keep your eyes on the <a href="https://circuitpython.org/downloads" target="_bank">CircuitPython downloads</a> page for your board to see if newer updates are available. The CircuitPython dev team are super active!</p>
+								</div> -->
+		
+							</div>
+						</div>
+					</div> <!-- row -->	   	
+					
+					<div class="row justify-content-center features-area mb-3" id="platforms">
+						<div class="col-12">
+							<div class="section-title text-left pb-1">
+								<h3 class="title">Coding Platforms</h3>
+								<p class="text mb-2">You are able to develop on your ESP32-S3 in a variety of languages and platforms.</p>
+								<p class="text mb-2">Info for the most popular platforms, <b>Espressif IDF</b>, <b>Arduino</b>, <b>CircuitPython</b> and <b>MicroPython</b> are listed below, but other interesting languages are becoming available as well, like <a href="https://github.com/esp-rs/rust-build" target="_blank">RUST</a> and <a href="https://tinygo.org/docs/reference/microcontrollers/esp32-mini32/" target="_blank">Go (TinyGO)</a>.</p>	
+							</div>
+						</div>
+
+						<div class="col-12">
+
+							<div class="card m-2" id="headingOne">
+								<div class="col-12 mt-0 p-3">
+									<h4>CitcuitPython</h4>
+									<a href='https://circuitpython.org/downloads?q=unexpected+maker+esp32s3' target="_blank" style="float:right;"><img class="shape" src="images/logo_circuitpython.svg" style="height:80px; margin:5px;" alt="Shape"></a>
+									
+									<p class="text mb-2 mt-2"><h4>Your board ships with the latest version of CircuitPython!</h4></p><p class="text mb-2 mt-2"><b>It also ships with the UF2 bootloader, so you can easily update your board with the latest CircuitPython firmware, whenever you desire.</b></p>
+									
+									<p class="text mb-3 mt-3">Just plug your board into your computer and it will appear in your filesystem as a USB flash drive! Just copy your code over, or edit your code directly on the drive. Coding a microcontroller has never been easier!</p>
+									
+									
+									<p class="text mb-4 mt-2">As newer versions of CircuitPython are released, you are able to update to them as you require from <a href='https://circuitpython.org/downloads?q=unexpected+maker+esp32s3' target="_blank">circuitpython.org</a></p>
+									
+									<p class="text mb-4 mt-2">If you need to grab the shipping CircuitPython code that comes with your board,<br>you can grab the <a href='https://github.com/unexpectedmaker/esp32s3/' target="_blank">latest here</a></p>
+									
+								</div> <!-- row -->
+							</div>
+							
+						</div>
+						<div class="col-12">
+								
+							<div class="card m-2" id="headingOne">
+								<div class="col-12 mt-0 p-3">
+									<h4>MicroPython</h4>
+									<a href='https://micropython.org/download/?mcu=esp32s3&vendor=Unexpected%20Maker' target="_blank" style="float:right;"><img class="shape m-1" src="images/logo_micropython.svg" alt="Shape" style="height:100px; margin:20px;"></a>
+									<p class="text mb-4 mt-2">MicroPython has excellent support for the ESP32, and that includes the ESP32-S3.</p>
+
+									<p class="text mb-4 mt-2">If you would like to put MicroPython on your new board, please follow the flashing guide for your board from <a href='https://micropython.org/download/?mcu=esp32s3&vendor=Unexpected%20Maker' target="_blank">this firmware link</a> and don't forget to erase your flash first!</p>
+									
+									<p class="text mb-4 mt-2">For more information about developing projects on your new board, using MicroPython, check out the <a href='http://docs.micropython.org/en/latest/' target="_blank">MicroPython documentation</a>.</p>	
+									
+									<div class="info-box p-3 m-2">
+										<span style="font-size: 20px;">Regarding MicroPython, Please Note!</span>
+										<p class="text mb-2 mt-2"><h5>Unlike CircuitPython and the STM32 port of MicroPython, the ESP32 port of MicroPython does not present you with a Mass Storage Drive to add/copy/edit code. </h5><br>It presents you with a USB serial port, and you need to use a tool like <a href="https://docs.micropython.org/en/latest/reference/mpremote.html" target="__blank">mpremote</a> to access the file system to add/copy/edit files.</p>
+									</div>
+								</div>
+							</div>
+						
+						</div>
+						<div class="col-12">
+									
+							<div class="card m-2" id="headingOne">
+								<div class="col-12 mt-0 p-3">
+									<h4>Espressif IDF</h4>
+									<img class="shape m-1" src="images/logo_esp-idf.svg" alt="Shape" style="height:100px; float:right; margin:20px;">
+									<p class="text mb-4 mt-2">ESP32-S3 support in the IDF is part of the v4.4 release. The latest IDF is v5.0, but it's in early development, so I recommend you stick to the v4.4 release branch for the time being as there are some low level breaking changes in v5.</p>
+									<p class="text mb-4 mt-2">Check out the <a href='https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/index.html'  target="_blank">ESP32-S3 IDF Docs</a> for information on how to install it and develop for the ESP32-S3</p>
+								</div>
+							</div>
+						
+						</div>
+						<div class="col-12">
+										
+							<div class="card m-2" id="headingOne">
+								<div class="col-12 mt-0 p-3">
+									<h4>Arduino IDE</h4>
+									<img class="shape m-1" src="images/logo_arduino.svg" alt="Shape"  style="height:100px; float:right; margin:20px;">
+									<p class="text mb-4 mt-2">Firstly, please make sure you have <a href="https://www.arduino.cc/en/software" target="_blank">downloaded and installed</a> the Arduino IDE for your OS if you have not already installed it.<p>
+									<p class="text mb-4 mt-2">Then, if you have not already setup your Arduino IDE environment to work with ESP32, or you are still on version 1.0.6 of the ESP32 Arduino Core, please follow the official <a href="https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html" target="_blank">Espressif ESP32 Arduino Core instructions</a> to install/update it.</p> 
+									
+									<p class="text mb-4 mt-2">Arduino support for the ESP32-S3 is available in the <b>Espressif ESP32 Arduino Core 2.0.3</b> and later. Please install the latest version to be able to select ESP32-S3 boards with the latest fixes and features.
+										<br><br>									
+										You can install this version from the Arduino IDE board manager (Image is the new Arduino IDE 2):<br>
+										<img class="shape m-1" src="images/arduino2_board_manager.jpg" alt="Shape"><br>
+
+										If you want to live on the bleeding edge, feel free to stay on the latest version by <a href="https://github.com/espressif/arduino-esp32/" target="_blank">cloning this repo</a> instead.
+									</p>	
+									
+									<p class="text mb-4 mt-2"><img class="shape m-1" style="float:right; width:60%; padding:8px;" src="images/um_boards_list.jpg" alt="Shape">Once the ESP32 boards support is installed, you can select your new board from the boards drop down list.<br><br>You are looking for <b>UM TinyS3</b>, <b>UM ProS3</b> and <b>UM FeatherS3</b>.<br>
+										
+									</p>	
+								</div>
+							</div>	
+						</div>
+						<div class="col-12">
+									
+							<div class="card m-2" id="headingOne">
+								<div class="col-12 mt-0 p-3">
+									<h4>PlatformIO</h4>
+									<img class="shape m-1" src="images/logo_platformio.svg" alt="Shape" style="height:100px; float:right; margin:20px;">
+									<p class="text mb-4 mt-2">
+										PlatformIO support is a bit fractures for Espressif MCUs right now. Official support stops at ESP32 Arduino Core 2.x, which is old now, but you can use the ESP32 Arduino Core 3.x by using the <a href="https://github.com/pioarduino/platform-espressif32" target="_blank">ESP32 Core provided by the PIOARDUINO</a>.
+										
+										You replace<br>
+<pre>
+[env]
+platform = platformio/espressif32
+</pre>
+with
+<pre>
+[env]	
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+</pre>
+									</p>
+									<p class="text mb-4 mt-2">
+										When using the PlatformIO for development, you need to ensure you enabled the USB peripheral when your code runs, or you will not see a serial port to re-flash or get any serial output. To enable the USB peripheral, you need to add:<br>
+<pre>build_flags = 
+-D ARDUINO_USB_CDC_ON_BOOT=1
+</pre>
+									</p>
+									<p class="text mb-4 mt-2">Here’s an example of how to use an UM Feather S3 in platformIO. This is in the platformio.ini file:</p>
+									
+<pre>
+[env]
+platform = platformio/espressif32
+board = um_feathers3
+framework = arduino
+; Waiting isn't needed for CDC/JTAG USB mode
+board_upload.wait_for_upload_port = false 
+
+lib_deps =
+	Wire
+	SPI
+	; Add your other libraries here
+
+build_flags =
+	-D ARDUINO_USB_MODE=1 ; CDC/JTAG USB mode
+	; Needed for USB to enumerate when user code starts
+	-D ARDUINO_USB_CDC_ON_BOOT=1
+</pre>
+									<p class="text mb-4 mt-2">I have a full <a href="https://github.com/UnexpectedMaker/esp32s3/tree/main/code/platformio/featherS3_example" target="_blank">PlatformIO example project for the FeatherS3</a> on GitHub.
+										<br />
+										The example can be altered to work with any other UM board by changing the line
+										</p>
+<pre>
+board = um_feathers3
+</pre>
+										<p class="text mb-4 mt-2">To any other UM board.</p>
+								</div>
+							</div>
+						
+						</div>
+						<div class="col-12">
+									
+							<div class="card m-2" id="headingOne">
+								<div class="col-12 mt-0 p-3">
+									<h4><span style="color:#00a500;">NEW!</span> nanoFramework</h4>
+									<img class="shape m-1" src="images/platform_nano.png" alt="Shape" style="height:100px; float:right; margin:20px;">
+									<p class="text mb-4 mt-2">You can now use the amazing nanoFramework on your Unexpected Maker ESP32-S3 boards! </p>
+									<p class="text mb-4 mt-2">nanoFramework is an embedded version of the .NET framework, which allows you to develop in C# on your microcontroller - how cool is that! </p>
+									<p class="text mb-4 mt-2">Check out the <a href='https://www.nanoframework.net' target="_blank">nanoFramework website</a> for information on how to install it and develop for the ESP32-S3</p>
+								</div>
+							</div>
+						
+						</div>
+
+					</div>
+			
+
+					<div class="row justify-content-center generic-area" id="reflashing">
+						<div class="col-12">
+							<div class="section-title text-left pb-1">
+								<h3 class="title mt-2">Flashing Code Onto Your Board</h3>
+								<p class="text mb-2">From time to time, you might want to try out different programming languages on your ESP32-S3 board, or you might just want to update the version of CircuitPython or MicroPython you are using. To achieve this, you'll need to learn how to put your board into different boot modes.</p>
+								
+								<div class="info-box p-3 m-2">
+									<span style="font-size: 20px;">First time flashing you board?</span>					
+									<p class="text m-0 p-0">Unexpected Maker ESP32-S3 boards ship with CircuitPython flashed on them. If you want to re-flash your board with the IDF or Arduino IDE, or even install MicroPython firmware, you have to put your board into DOWNLOAD mode for the first flash as the serial port you might see listed from CircuitPython is not able to be flashed directly.</p>
+								</div>
+
+								<p class="text mb-2">								
+									<h4 class="mb-2">Getting into DOWNLOAD Mode</h4>
+									Putting your board into Download Mode will force your board to restart in the CDC bootloader mode and enumerate a new serial device (COM port for Windows users). Form there you can flash the board using that serial port.<br><br>
+									This mode is used to flash a new version of the UF2 bootloader, or a new version of MicroPython onto your board, or even to flash some IDF or Arduino Code, if you are not enabling the native USB on boot-up.  <br><br>
+									To get your board into Download mode:<br>
+										<div  class="info-box col-10 text-left p-1 m-2">							
+										<p class="text m-0 p-0">
+											<ul>
+											<li>Press and hold the [BOOT] button down</li>
+											 <li>Press and Release the [RESET] button</li>
+											 <li>Release the [BOOT] button</li>
+											</ul>
+										</p>
+									</div>
+									There is no visual cue on the board that it is in Download mode, but you should now see a new serial device appear.
+								</p>
+								<p class="text mb-2">
+									<h4 class="mb-2">Getting into UF2 Bootloader Mode</h4>
+									Putting your board into UF2 Bootloader will force your board to restart and present you with a USB mass storage device in your file explorer - assuming you have the UF2 bootloader still installed and you have not stomped it by flashing Arduino, MicroPython or IDF code on the board.<br><br>
+									All Unexpected maker ESP32-S3 boards ship with CircuitPython and the UF2 Bootloader installed by default.<br><br>
+									To get your board into UF2 bootloader mode:<br>
+											<div  class="info-box col-10 text-left p-1 m-2">							
+											<p class="text m-0 p-0">
+												<ul>
+												<li>Press and Release [RESET]</li>
+												 <li>When the RGB LED is turns purple, Press and Release [BOOT]</li>
+												</ul>
+											</p>
+										</div>
+									You should now be in the UF2 bootloader mode. You will then see the RGB LED on your board turn green once the filesystem is mounted.
+								</p>
+								<p class="text mb-2">
+									<h4 class="mb-2">Flashing in the Arduino IDE</h4>
+									When using the Arduino IDE for development, there are a few things you need to be aware of.<br><br>
+									<img class="shape m-1" src="images/arduino_tools_menu.jpg" width="40%" style="float:right; margin: 15px;" alt="Shape">
+									The Unexpected Maker ESP32-S3 boards leverage the native USB inside the S3 chip and do not use an external SerialUART chip like older ESP32 boards did. This means you need to <b>enable the CDC on boot</b> option in the Arduino IDE tools menu to ensure the native USB is enabled when your code runs.<br><br>
+									Please also select the <b>USB OTG (TinyUSB)</b> option and ensure you have selected the correct <b>UM Board</b> definition from the boards list:<br>
+									<h5>UM Tinys3, UM FeatherS3 & UM ProS3</h5><br>
+									
+									<b>NOTE! </b>There is a ROM Mask bug in the current ESP32-S3 silicon that prevents the flashing process from resetting the board after flashing has finished, which means for now, you need to manually press the [RESET] button after flashing to manually reset the board so your code start running. Updated silicon from Espressif will fix this issue hopefully!<br><br>
+									
+								</p>
+							</div>
+						</div>
+					</div> <!-- row -->	   
+
+					
+					<div class="row justify-content-center features-area" id="battery">
+						<div class="col-12">
+							<div class="section-title text-left pb-1">
+								<h3 class="title">Powering From Battery</h3>
+								<p class="text mb-2">Your ESP32-S3 boards comes with support for using a battery to power your projects as well as the ability to charge your battery off the USB connector (or 5V pin if you are using an external 5V power supply).</p>
+		
+								<p class="text mb-2">The TinyS3 comes with a separate JST PH connector that you can solder onto the bottom of the board, as well as a VBAT header pin next to a GND pin to allow you to connect a battery via the headers.</p>
+								<p class="text mb-2">The FeatherS3 and ProS3 come with a battery connector on the board. The FeatherS3 has a JST PH connector and the ProS3 has a PicoBlade connector. Both also a VBAT header pin next to a GND pin to allow you to connect a battery via the headers.</p>
+		
+								<p class="text mb-2">You can use any size, single cell Li-Po battery to power your ESP32-S3 boards. Obviously, the larger the mAH rating of the battery, the longer it will last.</p>
+		
+								<p class="text mb-2">Please use LiPo-Batteries with charge protection included on them. Most hobby RC batteries do not have over discharge protection, and if a battery discharges too much, it can damage it and it might never be able to hold a proper charge again.</p>
+		
+								<p class="text mb-2"><strong>NOTE:</strong> When connecting a battery to your ESP32-S3 board, please check the polarity of the battery, as not every battery is wired the same way. The IC I use for charging does have in-built reverse voltage protection, but it’s better not to tempt fate!</p>
+		
+							</div>
+						</div> 
+					</div><!-- row -->	   
+					
+					<div class="row justify-content-center generic-area" id="helper">
+						<div class="col-12">
+							<div class="section-title text-left pb-1">
+								<h3 class="title mt-2">Helper Libraries</h3>
+								<p class="text mb-2">I have put together <a href="https://github.com/UnexpectedMaker/esp32s3/tree/main/code" target="_blak">helper libraries</a> for <b>CircuitPython</b>, <b>MicroPython</b> & <b>Arduino</b> to help you access certain functions of your ESP32-S3 board in an easy way.
+									<br><br>
+									The Arduino Helper Library is downloaded from the library manager within the Arduino IDE. Please search for the library called <b>UMS3 Helper</b>
+								</p>
+		
+								<p class="text mb-2">The MicroPython version of the helper is compiled into the firmware itself, where as the CircuitPython version is sitting in the filesystem on your board.</p>
+								
+								<p class="text mb-2">The included CircuitPython code that runs when your board powers up uses the helper library to do certain things, like cycle the RGB LED, turn the RGB LED power on (or the second LDO if the board is a FeatherS3 or ProS3) and it shows you how much Flash and RAM you have free.</p>
+								
+								<p class="text mb-2">You can also use the helper library to see if there is 5V power present:</p>
+								<pre>import tinys3<br>print(f"5V present? {tinys3.get_vbus_present()}")</pre>
+								
+								<p class="text mb-2">Or check the battery voltage if one is connected:</p>
+								<pre>import tinys3<br>print(f"VBAT voltage is {tinys3.get_battery_voltage()}v")</pre>
+								
+								<p class="text mb-2">For MicroPython or CircuitPython, use the <strong>tinys3.py</strong>, <strong>feathers3.py</strong> & <strong>pros3.py</strong> helper library for each board, and for Arduino, there's one helper library for all 3 boards.</p>
+
+							</div>
+						</div>
+					</div> <!-- row -->	   	
+					
+			
+					
+				</div>
+
+
+			</div>		
+		</div>
+	</section>
+
+
+	<div id="contact_insert"></div>
+
+	<!--====== FOOTER PART ENDS ======-->
+	
+	<!--====== BACK TOP TOP PART START ======-->
+
+	<a href="#" class="back-to-top"><i class="lni lni-chevron-up"></i></a>
+
+	<!--====== BACK TOP TOP PART ENDS ======-->    
+
+	<!--====== PART START ======-->
+
+<!--
+	<section class="">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-">
+					
+				</div>
+			</div>
+		</div>
+	</section>
+-->
+
+	<!--====== PART ENDS ======-->
+
+
+
+
+	<!--====== Jquery js ======-->
+	<script src="assets/js/vendor/jquery-1.12.4.min.js"></script>
+	<script src="assets/js/vendor/modernizr-3.7.1.min.js"></script>
+	
+	<!--====== Bootstrap js ======-->
+	<script src="assets/js/popper.min.js"></script>
+	<script src="assets/js/bootstrap.min.js"></script>
+	
+	<!--====== Slick js ======-->
+	<script src="assets/js/slick.min.js"></script>
+	
+	<!--====== Magnific Popup js ======-->
+	<script src="assets/js/jquery.magnific-popup.min.js"></script>
+	
+	<!--====== Isotope js ======-->
+	<script src="assets/js/imagesloaded.pkgd.min.js"></script>
+	<script src="assets/js/isotope.pkgd.min.js"></script>
+	
+	<!--====== Scrolling Nav js ======-->
+	<script src="assets/js/jquery.easing.min.js"></script>
+	<script src="assets/js/scrolling-nav.js"></script>
+	
+	<!--====== Main js ======-->
+	<script src="assets/js/main.js"></script>
+	
+
+	
+</body>
+
+</html>
