@@ -111,15 +111,8 @@ def _draw_aqi(display, state):
 
     _draw_aqi_bar(display, aqi_value, 42, 18)
 
-    pm25 = state.get("pm25")
-    if pm25 is None:
-        pm_line = "PM2.5  --"
-    else:
-        pm_line = "PM2.5  {:g} ug/m3".format(pm25)
-    display.text(pm_line, _PAD, 68, Adafruit_EPD.BLACK, size=2)
-
-    footer = _footer(state)
-    display.text(footer, _PAD, 108, Adafruit_EPD.DARK, size=1)
+    display.text(_pm_line(state), _PAD, 72, Adafruit_EPD.BLACK, size=1)
+    display.text(_status_line(state), _PAD, 108, Adafruit_EPD.DARK, size=1)
 
 
 def _draw_bins(display, state):
@@ -138,17 +131,32 @@ def _draw_bins(display, state):
         text = "{}  {}".format(label, "--" if value is None else value)
         display.text(text, _PAD, y, Adafruit_EPD.BLACK, size=1)
         y += 12
-    display.text(_footer(state), _PAD, 108, Adafruit_EPD.DARK, size=1)
+    display.text(_pm_line(state), _PAD, 96, Adafruit_EPD.DARK, size=1)
+    display.text(_status_line(state), _PAD, 112, Adafruit_EPD.DARK, size=1)
 
 
-def _footer(state):
+def _fmt_pm(value):
+    if value is None:
+        return "--"
+    return "{:g}".format(value)
+
+
+def _pm_line(state):
+    return "PM1.0 {}  PM2.5 {}  PM10 {} ug/m3".format(
+        _fmt_pm(state.get("pm1")),
+        _fmt_pm(state.get("pm25")),
+        _fmt_pm(state.get("pm10")),
+    )
+
+
+def _status_line(state):
     bits = []
-    pm10 = state.get("pm10")
-    if pm10 is not None:
-        bits.append("PM10 {}".format(int(pm10)))
     pct = state.get("percent")
+    voltage = state.get("voltage")
     if pct is not None:
-        bits.append("{}%".format(int(pct)))
+        bits.append("{}%".format(int(round(pct))))
+    if voltage is not None and voltage >= 0.1:
+        bits.append("{:.2f}V".format(voltage))
     if state.get("usb"):
         bits.append("USB")
     age = _age_label(state.get("age_s"))
@@ -156,7 +164,7 @@ def _footer(state):
         bits.append(age)
     if state.get("stale"):
         bits.append("STALE")
-    return "   ".join(bits)
+    return "  ".join(bits)
 
 
 def refresh(display):

@@ -11,7 +11,7 @@ import persist
 import power
 import sensor as sensor_mod
 
-_MIN_EINK_S = 180
+_MIN_EINK_S = 30
 
 
 def _now():
@@ -108,8 +108,10 @@ def _sample(sensor, usb, page):
         return saved
     state = _pack(reading, bat, usb, page, False, now)
     print(
-        "PM2.5={} AQI={} {} bat={} V={}".format(
+        "PM1.0={} PM2.5={} PM10={} ug/m3 AQI={} {} bat={} V={}".format(
+            state.get("pm1"),
             state.get("pm25"),
+            state.get("pm10"),
             state.get("aqi"),
             state.get("short"),
             state.get("percent"),
@@ -168,7 +170,7 @@ def run_usb(display, sensor):
             saved["page"] = page
             can_refresh = force or (now_mono - last_refresh_mono) >= _MIN_EINK_S
             if can_refresh:
-                saved = _show(display, saved, persist.load(), force, _now())
+                saved = _show(display, saved, persist.load(), True, _now())
                 last_refresh_mono = time.monotonic()
             else:
                 persist.save(saved)

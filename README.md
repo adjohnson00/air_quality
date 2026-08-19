@@ -47,7 +47,7 @@ Unexpected Maker’s ESP32-S3 Feather. Dual 240 MHz cores, 16 MB flash, 8 MB PSR
 
 [Adafruit #4777](https://www.adafruit.com/product/4777) · [docs](docs/4777-eink-featherwing/)
 
-296×128, four gray levels, SSD1680 (not the old IL0373). Image stays with the power off. Adafruit’s limit is one refresh every 180 seconds; the firmware respects that. Three buttons on the back: A forces a sample, B shows particle bins.
+296×128, four gray levels, SSD1680 (not the old IL0373). Image stays with the power off. On USB the firmware refreshes every 30 seconds so you can watch readings change; Adafruit’s long-term wear guidance is slower than that, so don’t leave USB-refresh running for months. Three buttons on the back: A forces a sample, B shows particle bins.
 
 ### PMSA003I — the smoke sensor
 
@@ -77,11 +77,11 @@ Plantower laser scatter module on a STEMMA QT breakout (I2C `0x12`). Reports PM1
 
 Every sample the Feather turns on LDO2, waits ~15 s for the fan, reads three frames, and keeps the median. PM2.5 (environmental) is converted with the **2024 US EPA AQI breakpoints** — same scale AirNow and Idaho DEQ use — as an instantaneous value, not 24-hour NowCast.
 
-The 2.9" card shows a large AQI number, category, a 4-gray bar, PM2.5 in µg/m³, battery %, and age of the reading. The panel only refreshes if the category changes, PM2.5 moves by ≥ 2 µg/m³, or an hour has passed.
+The 2.9" card shows a large AQI number and category, a 4-gray bar, then PM1.0 / PM2.5 / PM10 in µg/m³ plus battery and USB status.
 
 | Power | Sample interval | What it does |
 | --- | --- | --- |
-| USB-C | 3 minutes | Stays awake (also the development mode) |
+| USB-C | 30 seconds | Stays awake (development mode); display refreshes each sample |
 | Battery | 15 minutes | Deep-sleeps between samples |
 
 ## Docs in this repo
