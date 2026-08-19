@@ -118,14 +118,14 @@ def _draw_aqi(display, state):
 
 
 def _draw_bins(display, state):
-    display.text("PARTICLES / 0.1L", _PAD, 4, Adafruit_EPD.BLACK, size=2)
+    display.text("COUNT >size / 0.1L", _PAD, 4, Adafruit_EPD.BLACK, size=2)
     bins = (
-        ("0.3um", "particles 03um"),
-        ("0.5um", "particles 05um"),
-        ("1.0um", "particles 10um"),
-        ("2.5um", "particles 25um"),
-        ("5.0um", "particles 50um"),
-        ("10um", "particles 100um"),
+        (">0.3um", "particles 03um"),
+        (">0.5um", "particles 05um"),
+        (">1.0um", "particles 10um"),
+        (">2.5um", "particles 25um"),
+        (">5.0um", "particles 50um"),
+        (">10um", "particles 100um"),
     )
     y = 28
     for label, key in bins:
