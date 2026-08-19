@@ -168,4 +168,6 @@ def _status_line(state):
 
 
 def refresh(display):
+    # Full 4-gray SSD1680 waveform always inverts black/white a few times.
+    # That is how the film reaches gray; there is no flicker-free 4-gray update.
     display.display()

@@ -67,25 +67,34 @@ def _pack(reading, bat, usb, page, stale, sampled_at):
     return state
 
 
+def _rounded(value):
+    if value is None:
+        return None
+    return int(round(float(value)))
+
+
+def _card_key(state):
+    """Visible eInk fields; ignore age so a stable reading does not flash the panel."""
+    return (
+        state.get("page", 0),
+        state.get("aqi"),
+        state.get("short"),
+        _rounded(state.get("pm1")),
+        _rounded(state.get("pm25")),
+        _rounded(state.get("pm10")),
+        _rounded(state.get("percent")),
+        bool(state.get("stale")),
+    )
+
+
 def _should_refresh(previous, current, force, now):
     if force:
         return True
-    if previous is None:
+    if previous is None or previous.get("refreshed_at") is None:
         return True
-    if previous.get("page", 0) != current.get("page", 0):
+    if _card_key(previous) != _card_key(current):
         return True
-    if previous.get("short") != current.get("short"):
-        return True
-    old_pm = previous.get("pm25")
-    new_pm = current.get("pm25")
-    if old_pm is None or new_pm is None:
-        return old_pm != new_pm
-    if abs(new_pm - old_pm) >= config.PM25_REFRESH_DELTA:
-        return True
-    last = previous.get("refreshed_at")
-    if last is None:
-        return True
-    return (now - last) >= config.MAX_STALE_REFRESH_S
+    return (now - previous.get("refreshed_at", now)) >= config.MAX_STALE_REFRESH_S
 
 
 def _sample(sensor, usb, page):
@@ -166,12 +175,15 @@ def run_usb(display, sensor):
             else:
                 persist.save(saved)
         elif force or due:
+            previous = saved
             saved = _sample(sensor, True, page)
             saved["page"] = page
             can_refresh = force or (now_mono - last_refresh_mono) >= _MIN_EINK_S
             if can_refresh:
-                saved = _show(display, saved, persist.load(), True, _now())
-                last_refresh_mono = time.monotonic()
+                old_refresh = previous.get("refreshed_at")
+                saved = _show(display, saved, previous, force, _now())
+                if saved.get("refreshed_at") != old_refresh:
+                    last_refresh_mono = time.monotonic()
             else:
                 persist.save(saved)
             last_sample = time.monotonic()
