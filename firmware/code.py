@@ -90,7 +90,9 @@ def _should_refresh(previous, current, force, now):
 
 def _sample(sensor, usb, page):
     print("Sampling PM sensor...")
-    reading = sensor.read(config.SENSOR_WARMUP_S, config.SENSOR_SAMPLES)
+    reading = sensor.read(
+        config.SENSOR_WARMUP_S, config.SENSOR_SAMPLES, stay_on=usb
+    )
     bat = battery.read()
     now = _now()
     stale = reading is None
@@ -106,11 +108,12 @@ def _sample(sensor, usb, page):
         return saved
     state = _pack(reading, bat, usb, page, False, now)
     print(
-        "PM2.5={} AQI={} {} bat={}".format(
+        "PM2.5={} AQI={} {} bat={} V={}".format(
             state.get("pm25"),
             state.get("aqi"),
             state.get("short"),
             state.get("percent"),
+            state.get("voltage"),
         )
     )
     return state

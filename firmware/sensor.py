@@ -33,30 +33,37 @@ class Sensor:
             self._i2c = None
         self._ldo.value = False
 
-    def read(self, warmup_s, samples=3):
-        """Warm up, take samples, power down. Returns one reading dict or None."""
-        self.power_on()
-        time.sleep(warmup_s)
-        try:
-            self._i2c = busio.I2C(board.SCL2, board.SDA2, frequency=100000)
-            self._pm = PM25_I2C(self._i2c, None)
-        except Exception as exc:
-            print("PM25 init failed:", exc)
-            self.power_off()
-            return None
+    def read(self, warmup_s, samples=3, stay_on=False):
+        """Warm up, take samples. Power down unless stay_on (USB / development)."""
+        cold = self._pm is None
+        if cold:
+            self.power_on()
+            print("PM25 warmup {}s...".format(warmup_s))
+            time.sleep(warmup_s)
+            try:
+                self._i2c = busio.I2C(board.SCL2, board.SDA2, frequency=100000)
+                self._pm = PM25_I2C(self._i2c, None)
+            except Exception as exc:
+                print("PM25 init failed:", exc)
+                self.power_off()
+                return None
 
         readings = []
-        attempts = samples + 2
-        for _ in range(attempts):
+        attempts = samples + 8 if cold else samples + 2
+        for i in range(attempts):
             try:
                 readings.append(self._pm.read())
             except RuntimeError as exc:
-                print("PM25 read failed:", exc)
+                if cold and i < 6:
+                    print("PM25 still starting...")
+                else:
+                    print("PM25 read failed:", exc)
             if len(readings) >= samples:
                 break
             time.sleep(1)
 
-        self.power_off()
+        if not stay_on:
+            self.power_off()
         if not readings:
             return None
         return _median_sample(readings)
