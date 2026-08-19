@@ -20,3 +20,6 @@ SENSOR_WARMUP_S = get_int("SENSOR_WARMUP_S", 15)
 PM25_REFRESH_DELTA = get_int("PM25_REFRESH_DELTA", 2)
 MAX_STALE_REFRESH_S = get_int("MAX_STALE_REFRESH_S", 3600)
 SENSOR_SAMPLES = get_int("SENSOR_SAMPLES", 3)
+# If the sample interval is shorter than this, leave LDO2/PMSA003I powered.
+# Longer intervals (e.g. 5 min) cut I2C2 power between reads.
+KEEP_SENSOR_ON_BELOW_S = get_int("KEEP_SENSOR_ON_BELOW_S", 60)

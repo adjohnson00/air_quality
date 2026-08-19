@@ -51,6 +51,12 @@ def _get_monitor():
     return _monitor
 
 
+def mark_present():
+    """Pack was already in use (e.g. deep-sleep wake). Do not quick-start."""
+    global _prev_present
+    _prev_present = True
+
+
 def read():
     """MAX17048 on I2C1. Do not use board.VBAT analog on FeatherS3[D]."""
     global _prev_present
@@ -61,7 +67,8 @@ def read():
         usb = usb_connected()
         present, shown_pct, shown_v = interpret(voltage, percent, usb)
         if present and not _prev_present:
-            # Pack just appeared after USB-only / unplug. Restart SOC.
+            # First sighting this boot (or after USB-only). OCV-based SOC, not a learn cycle.
+            print("Battery appeared; MAX17048 quick-start")
             monitor.quick_start = True
             time.sleep(0.5)
             voltage = monitor.cell_voltage

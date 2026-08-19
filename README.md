@@ -50,7 +50,7 @@ Unexpected Maker’s ESP32-S3 Feather. Dual 240 MHz cores, 16 MB flash, 8 MB PSR
 296×128, four gray levels, SSD1680 (not the old IL0373). Image stays with the power off. On USB the firmware samples every 30 seconds and only refreshes the panel when the numbers change. Three buttons on the **back** of the wing (left to right from the back):
 
 - **A** — force a sample now
-- **B** — flip between the AQI card and particle-count bins (press B again to go back)
+- **B** — flip between the AQI card and particle-count bins immediately (press B again to go back)
 - **C** — unused
 - **Reset** — reboots the Feather
 
@@ -76,13 +76,17 @@ Plantower laser scatter module on a STEMMA QT breakout (I2C `0x12`). Reports PM1
 
 [Adafruit #3898](https://www.adafruit.com/product/3898) · [docs](docs/3898-lipo-400mah/)
 
-3.7 V, Feather-sized, 25 mm JST-PH. Charges from the Feather’s USB-C. A full cell is about **4.2 V**, not 4.3 V — 4.3 V with a percentage over 100% is the charger node with **no pack plugged in** (the orange CHG LED blinking on USB is the same symptom). The firmware hides that bogus % and shows `USB no batt` until a cell is seated. After you plug a battery in, the MAX17048 does a one-shot quick-start; it then tracks SOC. A full charge cycle is what really calibrates it — yanking the JST in and out on USB will not.
+3.7 V, Feather-sized, 25 mm JST-PH. Charges from the Feather’s USB-C. A full cell is about **4.2 V**. With USB and no pack, the charger node floats ~4.0–4.3 V and SOC can read over 100% — the firmware shows `USB no batt` instead.
+
+You do **not** need to leave USB + battery plugged in for the gauge to work. Powering down and unplugging the cell when idle is the right thing. Next boot, the MAX17048 estimates % from open-circuit voltage (quick-start). That is plenty for this display. A full charge/discharge “learn” cycle only tightens it; it is optional and not worth leaving the project on the charger unused.
 
 At 15-minute samples the pack should last on the order of 3–5 days. Charge only via the Feather, and don’t puncture or bend it.
 
 ## How it works
 
-Every sample the Feather turns on LDO2, waits ~15 s for the fan, reads three frames, and keeps the median. PM2.5 (environmental) is converted with the **2024 US EPA AQI breakpoints** — same scale AirNow and Idaho DEQ use — as an instantaneous value, not 24-hour NowCast.
+Every sample the Feather enables **LDO2** (the 3.3 V rail on STEMMA I2C2), waits ~15 s for the PMSA003I fan, reads three frames, and keeps the median. If the sample interval is under 60 s (USB default 30 s), LDO2 stays on so you are not paying warmup every time. At 5 minutes or the 15-minute battery interval, LDO2 drops between reads and the sensor is fully off. PM2.5 (environmental) is converted with the **2024 US EPA AQI breakpoints** — same scale AirNow and Idaho DEQ use — as an instantaneous value, not 24-hour NowCast.
+
+To sleep the sensor on USB too, set `USB_SAMPLE_INTERVAL_S = 300` in `settings.toml` (5 minutes).
 
 The 2.9" card shows a large AQI number and category, a 4-gray bar, then PM1.0 / PM2.5 / PM10 in µg/m³ plus battery and USB status.
 

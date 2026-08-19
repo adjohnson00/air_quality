@@ -98,10 +98,21 @@ def _should_refresh(previous, current, force, now):
     return (now - previous.get("refreshed_at", now)) >= config.MAX_STALE_REFRESH_S
 
 
+def _sample_interval(usb):
+    if usb:
+        return config.USB_SAMPLE_INTERVAL_S
+    return config.SAMPLE_INTERVAL_S
+
+
+def _keep_sensor_on(usb):
+    return _sample_interval(usb) < config.KEEP_SENSOR_ON_BELOW_S
+
+
 def _sample(sensor, usb, page):
-    print("Sampling PM sensor...")
+    stay_on = _keep_sensor_on(usb)
+    print("Sampling PM sensor (LDO2 {} between reads)...".format("stays on" if stay_on else "off"))
     reading = sensor.read(
-        config.SENSOR_WARMUP_S, config.SENSOR_SAMPLES, stay_on=usb
+        config.SENSOR_WARMUP_S, config.SENSOR_SAMPLES, stay_on=stay_on
     )
     bat = battery.read()
     now = _now()
@@ -153,7 +164,13 @@ def run_usb(display, sensor):
     buttons = _buttons()
     last_sample = 0
     last_refresh_mono = -_MIN_EINK_S
-    print("USB mode, sample every {}s".format(config.USB_SAMPLE_INTERVAL_S))
+    stay = _keep_sensor_on(True)
+    print(
+        "USB mode, sample every {}s, sensor {}".format(
+            config.USB_SAMPLE_INTERVAL_S,
+            "stays powered" if stay else "LDO2 off between samples",
+        )
+    )
     while True:
         now_mono = time.monotonic()
         force = False
@@ -171,11 +188,9 @@ def run_usb(display, sensor):
             page = 1 - page
             saved["page"] = page
             saved["usb"] = True
-            if (now_mono - last_refresh_mono) >= _MIN_EINK_S:
-                _show(display, saved, None, True, _now())
-                last_refresh_mono = time.monotonic()
-            else:
-                persist.save(saved)
+            print("Button B: page", page)
+            _show(display, saved, None, True, _now())
+            last_refresh_mono = time.monotonic()
         elif force or due:
             previous = saved
             saved = _sample(sensor, True, page)
@@ -204,6 +219,8 @@ def run_battery(display, sensor):
         saved["usb"] = False
         _show(display, saved, None, True, _now())
     else:
+        if reason == "timer" and saved.get("present"):
+            battery.mark_present()
         saved = _sample(sensor, False, page)
         saved["page"] = page
         _show(display, saved, persist.load(), force, _now())
