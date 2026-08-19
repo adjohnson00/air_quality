@@ -42,6 +42,7 @@ def _pack(reading, bat, usb, page, stale, sampled_at):
         "sampled_at": sampled_at,
         "percent": bat.get("percent") if bat else None,
         "voltage": bat.get("voltage") if bat else None,
+        "present": bat.get("present") if bat else False,
         "aqi": None,
         "short": None,
         "category": None,
@@ -113,6 +114,7 @@ def _sample(sensor, usb, page):
         saved["page"] = page
         saved["percent"] = bat.get("percent")
         saved["voltage"] = bat.get("voltage")
+        saved["present"] = bat.get("present")
         saved["age_s"] = None if saved.get("sampled_at") is None else now - saved["sampled_at"]
         return saved
     state = _pack(reading, bat, usb, page, False, now)

@@ -77,7 +77,9 @@ def _draw_aqi_bar(display, aqi_value, y, height):
         marker_x = 2
     if marker_x > width - 3:
         marker_x = width - 3
-    display.fill_rect(marker_x - 1, y, 3, height, Adafruit_EPD.BLACK)
+    # WHITE/LIGHT bands need a black needle; DARK/BLACK bands need white.
+    needle = Adafruit_EPD.WHITE if clamped >= 100 else Adafruit_EPD.BLACK
+    display.fill_rect(marker_x - 1, y, 3, height, needle)
 
 
 def draw_card(display, state):
@@ -159,11 +161,17 @@ def _status_line(state):
         bits.append("{:.2f}V".format(voltage))
     if state.get("usb"):
         bits.append("USB")
+        if not state.get("present") and state.get("percent") is None:
+            bits.append("no batt")
     age = _age_label(state.get("age_s"))
     if age:
         bits.append(age)
     if state.get("stale"):
         bits.append("STALE")
+    if state.get("page", 0) == 1:
+        bits.append("B:aqi")
+    else:
+        bits.append("B:bins")
     return "  ".join(bits)
 
 

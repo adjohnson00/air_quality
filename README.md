@@ -47,7 +47,12 @@ Unexpected Maker’s ESP32-S3 Feather. Dual 240 MHz cores, 16 MB flash, 8 MB PSR
 
 [Adafruit #4777](https://www.adafruit.com/product/4777) · [docs](docs/4777-eink-featherwing/)
 
-296×128, four gray levels, SSD1680 (not the old IL0373). Image stays with the power off. On USB the firmware refreshes every 30 seconds so you can watch readings change; Adafruit’s long-term wear guidance is slower than that, so don’t leave USB-refresh running for months. Three buttons on the back: A forces a sample, B shows particle bins.
+296×128, four gray levels, SSD1680 (not the old IL0373). Image stays with the power off. On USB the firmware samples every 30 seconds and only refreshes the panel when the numbers change. Three buttons on the **back** of the wing (left to right from the back):
+
+- **A** — force a sample now
+- **B** — flip between the AQI card and particle-count bins (press B again to go back)
+- **C** — unused
+- **Reset** — reboots the Feather
 
 ### PMSA003I — the smoke sensor
 
@@ -71,7 +76,9 @@ Plantower laser scatter module on a STEMMA QT breakout (I2C `0x12`). Reports PM1
 
 [Adafruit #3898](https://www.adafruit.com/product/3898) · [docs](docs/3898-lipo-400mah/)
 
-3.7 V, Feather-sized, 25 mm JST-PH. Charges from the Feather’s USB-C. At 15-minute samples the pack should last on the order of 3–5 days; leave the sensor running and it dies in about two hours. Charge only via the Feather, and don’t puncture or bend it.
+3.7 V, Feather-sized, 25 mm JST-PH. Charges from the Feather’s USB-C. A full cell is about **4.2 V**, not 4.3 V — 4.3 V with a percentage over 100% is the charger node with **no pack plugged in** (the orange CHG LED blinking on USB is the same symptom). The firmware hides that bogus % and shows `USB no batt` until a cell is seated. After you plug a battery in, the MAX17048 does a one-shot quick-start; it then tracks SOC. A full charge cycle is what really calibrates it — yanking the JST in and out on USB will not.
+
+At 15-minute samples the pack should last on the order of 3–5 days. Charge only via the Feather, and don’t puncture or bend it.
 
 ## How it works
 
