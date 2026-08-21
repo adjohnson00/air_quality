@@ -259,19 +259,23 @@ def run_battery(display, sensor):
             _halt_low_battery(display, sensor, saved, saved, reason)
             return
         _show(display, saved, persist.load(), force, _now())
-    print("Deep sleep {}s".format(config.SAMPLE_INTERVAL_S))
-    power.deep_sleep(config.SAMPLE_INTERVAL_S)
+    power.sleep_interval(config.SAMPLE_INTERVAL_S, config.use_deep_sleep())
 
 
 def main():
+    power.disable_rf()
     usb = battery.usb_connected()
     print("USB connected:" if usb else "On battery:", usb)
+    print("Sleep mode:", config.SLEEP_MODE)
     display = display_ui.init_display()
     sensor = sensor_mod.Sensor()
     if usb:
         run_usb(display, sensor)
-    else:
+        return
+    while True:
         run_battery(display, sensor)
+        if config.use_deep_sleep():
+            return
 
 
 main()

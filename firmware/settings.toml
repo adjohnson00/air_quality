@@ -9,3 +9,6 @@ SENSOR_SAMPLES = 3
 KEEP_SENSOR_ON_BELOW_S = 30
 LOW_BATTERY_V = 3.2
 LOW_BATTERY_SLEEP_S = 3600
+# deep = lowest power, restarts firmware each wake
+# light = RAM kept, faster wake, higher sleep current
+SLEEP_MODE = "deep"

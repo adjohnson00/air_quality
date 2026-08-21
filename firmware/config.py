@@ -34,3 +34,20 @@ SENSOR_SAMPLES = get_int("SENSOR_SAMPLES", 3)
 KEEP_SENSOR_ON_BELOW_S = get_int("KEEP_SENSOR_ON_BELOW_S", 30)
 LOW_BATTERY_V = get_float("LOW_BATTERY_V", 3.2)
 LOW_BATTERY_SLEEP_S = get_int("LOW_BATTERY_SLEEP_S", 3600)
+
+
+def get_str(name, default):
+    raw = os.getenv(name)
+    if raw is None or raw == "":
+        return default
+    cleaned = raw.strip().strip('"').strip("'").lower()
+    return cleaned if cleaned else default
+
+
+# "deep" = lowest power, code.py restarts each wake.
+# "light" = RAM kept, faster wake, more sleep current.
+SLEEP_MODE = get_str("SLEEP_MODE", "deep")
+
+
+def use_deep_sleep():
+    return SLEEP_MODE != "light"

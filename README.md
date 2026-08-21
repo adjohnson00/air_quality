@@ -93,8 +93,15 @@ The 2.9" card shows a large AQI number and category, a 4-gray bar, then PM1.0 / 
 | Power | Sample interval | What it does |
 | --- | --- | --- |
 | USB-C | 60 seconds | Stays awake; LDO2 off between samples |
-| Battery | 60 seconds, 5 s warmup | Deep-sleeps between samples (~8–13% sensor duty) |
-| Cell ≤ 3.2 V | Halt | LOW BATT card, deep sleep until USB (or 1 h recheck) |
+| Battery | 60 seconds, 5 s warmup | Sleeps between samples (`SLEEP_MODE`); ~8–13% sensor duty |
+| Cell ≤ 3.2 V | Halt | LOW BATT card, **deep** sleep until USB (or 1 h recheck) |
+
+Wi-Fi and Bluetooth are forced off at boot (`boot.py`) and again before sleep. Nothing in this firmware connects.
+
+`SLEEP_MODE` in `settings.toml`:
+
+- `"deep"` (default) — lowest current; `code.py` restarts each wake
+- `"light"` — CPU paused, RAM kept, faster wake, more sleep current (tens of mA vs µA)
 
 ## Docs in this repo
 
