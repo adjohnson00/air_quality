@@ -10,6 +10,8 @@ def wake_reason():
     if wake is None:
         return "boot"
     if isinstance(wake, alarm.pin.PinAlarm):
+        if wake.pin == board.VBUS:
+            return "usb"
         if wake.pin == board.D11:
             return "a"
         if wake.pin == board.D12:
@@ -26,3 +28,17 @@ def deep_sleep(seconds):
     pin_a = alarm.pin.PinAlarm(pin=board.D11, value=False, pull=True)
     pin_b = alarm.pin.PinAlarm(pin=board.D12, value=False, pull=True)
     alarm.exit_and_deep_sleep_until_alarms(time_alarm, pin_a, pin_b)
+
+
+def halt_until_usb(seconds):
+    """Deep sleep until USB is plugged in, button A, or a long recheck timer.
+
+    The FeatherS3[D] cannot software-latch the 3.3 V EN pin; deep sleep is the
+    lowest power state firmware can enter. The e-ink image stays.
+    """
+    if seconds < 1:
+        seconds = 1
+    time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + seconds)
+    pin_a = alarm.pin.PinAlarm(pin=board.D11, value=False, pull=True)
+    pin_usb = alarm.pin.PinAlarm(pin=board.VBUS, value=True, pull=False)
+    alarm.exit_and_deep_sleep_until_alarms(time_alarm, pin_a, pin_usb)

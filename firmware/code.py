@@ -78,6 +78,7 @@ def _card_key(state):
     """Visible eInk fields; ignore age so a stable reading does not flash the panel."""
     return (
         state.get("page", 0),
+        bool(state.get("low_batt")),
         state.get("aqi"),
         state.get("short"),
         _rounded(state.get("pm1")),
@@ -207,11 +208,42 @@ def run_usb(display, sensor):
         time.sleep(0.1)
 
 
+def _battery_is_low(bat):
+    voltage = bat.get("voltage")
+    if voltage is None:
+        return False
+    return voltage <= config.LOW_BATTERY_V
+
+
+def _halt_low_battery(display, sensor, saved, bat, reason):
+    sensor.power_off()
+    state = saved if saved else {}
+    state["low_batt"] = True
+    state["usb"] = False
+    state["voltage"] = bat.get("voltage")
+    state["percent"] = None
+    already = bool(saved.get("low_batt")) if saved else False
+    if (not already) or reason in ("a", "boot"):
+        print("Low battery {:.2f} V — showing halt card".format(bat.get("voltage") or 0))
+        _show(display, state, None, True, _now())
+    else:
+        persist.save(state)
+        print("Low battery {:.2f} V — staying asleep".format(bat.get("voltage") or 0))
+    power.halt_until_usb(config.LOW_BATTERY_SLEEP_S)
+
+
 def run_battery(display, sensor):
     reason = power.wake_reason()
     print("Battery wake:", reason)
     saved = persist.load() or {"page": 0}
     page = saved.get("page", 0)
+    if reason == "timer" and saved.get("present"):
+        battery.mark_present()
+    bat = battery.read()
+    if _battery_is_low(bat):
+        _halt_low_battery(display, sensor, saved, bat, reason)
+        return
+    saved["low_batt"] = False
     force = reason in ("a", "boot")
     if reason == "b":
         page = 1 - page
@@ -219,10 +251,13 @@ def run_battery(display, sensor):
         saved["usb"] = False
         _show(display, saved, None, True, _now())
     else:
-        if reason == "timer" and saved.get("present"):
-            battery.mark_present()
         saved = _sample(sensor, False, page)
         saved["page"] = page
+        if _battery_is_low(
+            {"voltage": saved.get("voltage"), "percent": saved.get("percent")}
+        ):
+            _halt_low_battery(display, sensor, saved, saved, reason)
+            return
         _show(display, saved, persist.load(), force, _now())
     print("Deep sleep {}s".format(config.SAMPLE_INTERVAL_S))
     power.deep_sleep(config.SAMPLE_INTERVAL_S)

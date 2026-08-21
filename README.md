@@ -92,8 +92,9 @@ The 2.9" card shows a large AQI number and category, a 4-gray bar, then PM1.0 / 
 
 | Power | Sample interval | What it does |
 | --- | --- | --- |
-| USB-C | 30 seconds | Stays awake (development mode); display refreshes each sample |
-| Battery | 15 minutes | Deep-sleeps between samples |
+| USB-C | 60 seconds | Stays awake; LDO2 off between samples |
+| Battery | 60 seconds, 5 s warmup | Deep-sleeps between samples (~8–13% sensor duty) |
+| Cell ≤ 3.2 V | Halt | LOW BATT card, deep sleep until USB (or 1 h recheck) |
 
 ## Docs in this repo
 

@@ -83,13 +83,25 @@ def _draw_aqi_bar(display, aqi_value, y, height):
 
 
 def draw_card(display, state):
-    """Page 0: AQI card. Page 1: particle bins."""
+    """Page 0: AQI card. Page 1: particle bins. low_batt: halt screen."""
     display.fill(Adafruit_EPD.WHITE)
+    if state.get("low_batt"):
+        _draw_low_battery(display, state)
+        return
     page = state.get("page", 0)
     if page == 1:
         _draw_bins(display, state)
     else:
         _draw_aqi(display, state)
+
+
+def _draw_low_battery(display, state):
+    display.text("LOW BATT", _PAD, 10, Adafruit_EPD.BLACK, size=3)
+    display.text("sleeping", _PAD, 50, Adafruit_EPD.DARK, size=2)
+    voltage = state.get("voltage")
+    if voltage is not None:
+        display.text("{:.2f} V".format(voltage), _PAD, 80, Adafruit_EPD.BLACK, size=2)
+    display.text("plug USB to resume", _PAD, 112, Adafruit_EPD.DARK, size=1)
 
 
 def _draw_aqi(display, state):
