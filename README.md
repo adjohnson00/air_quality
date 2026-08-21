@@ -101,6 +101,7 @@ The 2.9" card shows a large AQI number and category, a 4-gray bar, then PM1.0 / 
 - [docs/project.md](docs/project.md) — original BOM notes
 - [docs/build-plan.md](docs/build-plan.md) — pin map, power budget, firmware phases
 - [hardware/assembly.md](hardware/assembly.md) — how to stack the boards
+- [hardware/enclosure/](hardware/enclosure/) — 3D-printed case (STLs + generator)
 - [docs/](docs/) — datasheets and Adafruit learn guides
 
 ## Firmware

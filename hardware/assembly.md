@@ -15,3 +15,5 @@ Then copy `firmware/bringup.py` to `CIRCUITPY/code.py` and watch the serial cons
 - I2C2 should list `0x12` (PMSA003I)
 
 Charge only via the Feather. Do not leave charging unattended for long. Do not puncture or bend the LiPo.
+
+A 3D-printed two-piece case (USB hole, battery corral, display window, vented sensor bay) is in [enclosure/](enclosure/).
