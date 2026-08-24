@@ -3,10 +3,13 @@
 SAMPLE_INTERVAL_S = 60
 USB_SAMPLE_INTERVAL_S = 60
 SENSOR_WARMUP_S = 5
-PM25_REFRESH_DELTA = 1
 MAX_STALE_REFRESH_S = 3600
 SENSOR_SAMPLES = 3
 KEEP_SENSOR_ON_BELOW_S = 30
 LOW_BATTERY_V = 3.2
 LOW_BATTERY_SLEEP_S = 3600
+# deep | light | no | full
+# no = CPU always on, LDO2/sensor only during each sample
+# full = CPU and LDO2/sensor always on
 SLEEP_MODE = "deep"
+VOLTAGE_LOG = 1

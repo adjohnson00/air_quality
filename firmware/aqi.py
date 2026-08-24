@@ -1,6 +1,16 @@
 # US EPA PM2.5 AQI, 2024 breakpoints (AirNow / Idaho DEQ).
 # Instantaneous concentration, not 24-hour NowCast.
 
+# Plantower cumulative >size counts per 0.1 L. Keys match adafruit_pm25.
+PARTICLE_BINS = (
+    (">0.3um", "particles 03um"),
+    (">0.5um", "particles 05um"),
+    (">1.0um", "particles 10um"),
+    (">2.5um", "particles 25um"),
+    (">5.0um", "particles 50um"),
+    (">10um", "particles 100um"),
+)
+
 # (C_low, C_high, I_low, I_high, category, short label)
 _BREAKPOINTS = (
     (0.0, 9.0, 0, 50, "Good", "GOOD"),

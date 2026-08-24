@@ -3,6 +3,8 @@ import digitalio
 from adafruit_epd.epd import Adafruit_EPD
 from adafruit_epd.ssd1680 import Adafruit_SSD1680_Grayscale4
 
+import aqi
+
 _CHAR_W = 5
 _PAD = 6
 
@@ -37,10 +39,9 @@ def _text_width(text, size):
 
 
 def _age_label(age_s):
-    if age_s is None:
+    # At 60 s samples a fresh card would always say "now"; only show when old.
+    if age_s is None or age_s < 90:
         return ""
-    if age_s < 90:
-        return "now"
     if age_s < 3600:
         return "{}m ago".format(int(age_s / 60))
     return "{}h ago".format(int(age_s / 3600))
@@ -131,16 +132,8 @@ def _draw_aqi(display, state):
 
 def _draw_bins(display, state):
     display.text("COUNT >size / 0.1L", _PAD, 4, Adafruit_EPD.BLACK, size=2)
-    bins = (
-        (">0.3um", "particles 03um"),
-        (">0.5um", "particles 05um"),
-        (">1.0um", "particles 10um"),
-        (">2.5um", "particles 25um"),
-        (">5.0um", "particles 50um"),
-        (">10um", "particles 100um"),
-    )
     y = 28
-    for label, key in bins:
+    for label, key in aqi.PARTICLE_BINS:
         value = state.get(key)
         text = "{}  {}".format(label, "--" if value is None else value)
         display.text(text, _PAD, y, Adafruit_EPD.BLACK, size=1)
@@ -175,6 +168,9 @@ def _status_line(state):
         bits.append("USB")
         if not state.get("present") and state.get("percent") is None:
             bits.append("no batt")
+    charge = state.get("charge_label")
+    if charge:
+        bits.append(charge)
     age = _age_label(state.get("age_s"))
     if age:
         bits.append(age)

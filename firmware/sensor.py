@@ -14,9 +14,9 @@ def _median_sample(readings):
 class Sensor:
     """PMSA003I on STEMMA I2C2, power-gated by LDO2."""
 
-    def __init__(self):
+    def __init__(self, start_on=False):
         self._ldo = digitalio.DigitalInOut(board.LDO2)
-        self._ldo.switch_to_output(value=False)
+        self._ldo.switch_to_output(value=bool(start_on))
         self._i2c = None
         self._pm = None
 
@@ -32,12 +32,28 @@ class Sensor:
                 pass
             self._i2c = None
         self._ldo.value = False
+        print("LDO2 off")
+
+    def ldo_pin(self):
+        """DigitalInOut for LDO2, still owned. Drive it low before preserve_dios."""
+        return self._ldo
+
+    def release(self):
+        """Power down and free the LDO2 pin so halt can hold it low."""
+        self.power_off()
+        if self._ldo is not None:
+            try:
+                self._ldo.deinit()
+            except Exception:
+                pass
+            self._ldo = None
 
     def read(self, warmup_s, samples=3, stay_on=False):
         """Warm up, take samples. Power down unless stay_on (USB / development)."""
         cold = self._pm is None
         if cold:
-            self.power_on()
+            if not self._ldo.value:
+                self.power_on()
             print("PM25 warmup {}s...".format(warmup_s))
             time.sleep(warmup_s)
             try:

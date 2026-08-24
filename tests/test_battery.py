@@ -35,6 +35,23 @@ class TestBatteryInterpret(unittest.TestCase):
         self.assertFalse(present)
         self.assertIsNone(pct)
 
+    def test_dying_pack_is_still_present(self):
+        present, pct, volts = battery.interpret(3.18, 0.0, False)
+        self.assertTrue(present)
+        self.assertEqual(pct, 0.0)
+        self.assertEqual(volts, 3.18)
+
+
+class TestChargeLabel(unittest.TestCase):
+    def test_only_when_usb_and_pack_and_charging(self):
+        self.assertIsNone(battery.charge_label(False, True, 20.0))
+        self.assertIsNone(battery.charge_label(True, False, 20.0))
+        self.assertIsNone(battery.charge_label(True, True, None))
+        self.assertIsNone(battery.charge_label(True, True, 1.5))
+        self.assertIsNone(battery.charge_label(True, True, -4.0))
+        self.assertEqual(battery.charge_label(True, True, 18.2), "+18%/h")
+        self.assertEqual(battery.charge_label(True, True, 2.0), "+2%/h")
+
 
 if __name__ == "__main__":
     unittest.main()

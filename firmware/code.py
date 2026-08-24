@@ -10,6 +10,7 @@ import display_ui
 import persist
 import power
 import sensor as sensor_mod
+import vlog
 
 _MIN_EINK_S = 30
 
@@ -34,6 +35,14 @@ def _pressed(pin):
     return not pin.value
 
 
+def _release_pins(pins):
+    for pin in pins:
+        try:
+            pin.deinit()
+        except Exception:
+            pass
+
+
 def _pack(reading, bat, usb, page, stale, sampled_at):
     state = {
         "page": page,
@@ -43,6 +52,8 @@ def _pack(reading, bat, usb, page, stale, sampled_at):
         "percent": bat.get("percent") if bat else None,
         "voltage": bat.get("voltage") if bat else None,
         "present": bat.get("present") if bat else False,
+        "charge_rate": bat.get("charge_rate") if bat else None,
+        "charge_label": bat.get("charge_label") if bat else None,
         "aqi": None,
         "short": None,
         "category": None,
@@ -56,14 +67,7 @@ def _pack(reading, bat, usb, page, stale, sampled_at):
         state.update(converted)
         state["pm10"] = reading.get("pm100 env")
         state["pm1"] = reading.get("pm10 env")
-        for key in (
-            "particles 03um",
-            "particles 05um",
-            "particles 10um",
-            "particles 25um",
-            "particles 50um",
-            "particles 100um",
-        ):
+        for _label, key in aqi.PARTICLE_BINS:
             state[key] = reading.get(key)
     return state
 
@@ -79,12 +83,14 @@ def _card_key(state):
     return (
         state.get("page", 0),
         bool(state.get("low_batt")),
+        bool(state.get("usb")),
         state.get("aqi"),
         state.get("short"),
         _rounded(state.get("pm1")),
         _rounded(state.get("pm25")),
         _rounded(state.get("pm10")),
         _rounded(state.get("percent")),
+        state.get("charge_label"),
         bool(state.get("stale")),
     )
 
@@ -106,7 +112,7 @@ def _sample_interval(usb):
 
 
 def _keep_sensor_on(usb):
-    return _sample_interval(usb) < config.KEEP_SENSOR_ON_BELOW_S
+    return config.keep_sensor_powered(_sample_interval(usb))
 
 
 def _sample(sensor, usb, page):
@@ -127,11 +133,14 @@ def _sample(sensor, usb, page):
         saved["percent"] = bat.get("percent")
         saved["voltage"] = bat.get("voltage")
         saved["present"] = bat.get("present")
+        saved["charge_rate"] = bat.get("charge_rate")
+        saved["charge_label"] = bat.get("charge_label")
         saved["age_s"] = None if saved.get("sampled_at") is None else now - saved["sampled_at"]
+        vlog.append(saved, _sample_interval(usb))
         return saved
     state = _pack(reading, bat, usb, page, False, now)
     print(
-        "PM1.0={} PM2.5={} PM10={} ug/m3 AQI={} {} bat={} V={}".format(
+        "PM1.0={} PM2.5={} PM10={} ug/m3 AQI={} {} bat={} V={}{}".format(
             state.get("pm1"),
             state.get("pm25"),
             state.get("pm10"),
@@ -139,8 +148,10 @@ def _sample(sensor, usb, page):
             state.get("short"),
             state.get("percent"),
             state.get("voltage"),
+            (" " + state["charge_label"]) if state.get("charge_label") else "",
         )
     )
+    vlog.append(state, _sample_interval(usb))
     return state
 
 
@@ -159,55 +170,6 @@ def _show(display, state, previous, force, now):
     return state
 
 
-def run_usb(display, sensor):
-    saved = persist.load() or {"page": 0}
-    page = saved.get("page", 0)
-    buttons = _buttons()
-    last_sample = 0
-    last_refresh_mono = -_MIN_EINK_S
-    stay = _keep_sensor_on(True)
-    print(
-        "USB mode, sample every {}s, sensor {}".format(
-            config.USB_SAMPLE_INTERVAL_S,
-            "stays powered" if stay else "LDO2 off between samples",
-        )
-    )
-    while True:
-        now_mono = time.monotonic()
-        force = False
-        flip = False
-        if _pressed(buttons[0]):
-            force = True
-            while _pressed(buttons[0]):
-                time.sleep(0.05)
-        if _pressed(buttons[1]):
-            flip = True
-            while _pressed(buttons[1]):
-                time.sleep(0.05)
-        due = (now_mono - last_sample) >= config.USB_SAMPLE_INTERVAL_S
-        if flip:
-            page = 1 - page
-            saved["page"] = page
-            saved["usb"] = True
-            print("Button B: page", page)
-            _show(display, saved, None, True, _now())
-            last_refresh_mono = time.monotonic()
-        elif force or due:
-            previous = saved
-            saved = _sample(sensor, True, page)
-            saved["page"] = page
-            can_refresh = force or (now_mono - last_refresh_mono) >= _MIN_EINK_S
-            if can_refresh:
-                old_refresh = previous.get("refreshed_at")
-                saved = _show(display, saved, previous, force, _now())
-                if saved.get("refreshed_at") != old_refresh:
-                    last_refresh_mono = time.monotonic()
-            else:
-                persist.save(saved)
-            last_sample = time.monotonic()
-        time.sleep(0.1)
-
-
 def _battery_is_low(bat):
     voltage = bat.get("voltage")
     if voltage is None:
@@ -216,66 +178,171 @@ def _battery_is_low(bat):
 
 
 def _halt_low_battery(display, sensor, saved, bat, reason):
-    sensor.power_off()
+    if battery.usb_connected():
+        print("USB in, skip halt")
+        return
+    sensor.release()
+    ldo = power.claim_ldo2_off()
     state = saved if saved else {}
     state["low_batt"] = True
     state["usb"] = False
+    state["present"] = True
     state["voltage"] = bat.get("voltage")
-    state["percent"] = None
-    already = bool(saved.get("low_batt")) if saved else False
-    if (not already) or reason in ("a", "boot"):
-        print("Low battery {:.2f} V — showing halt card".format(bat.get("voltage") or 0))
-        _show(display, state, None, True, _now())
-    else:
-        persist.save(state)
-        print("Low battery {:.2f} V — staying asleep".format(bat.get("voltage") or 0))
-    power.halt_until_usb(config.LOW_BATTERY_SLEEP_S)
+    state["percent"] = bat.get("percent")
+    print(
+        "Low battery {:.2f} V (wake {}) — showing halt card".format(
+            bat.get("voltage") or 0, reason
+        )
+    )
+    _show(display, state, None, True, _now())
+    vlog.append(state, _sample_interval(False))
+    power.halt_until_usb(config.LOW_BATTERY_SLEEP_S, ldo_pin=ldo)
 
 
-def run_battery(display, sensor):
+def _sleep_between_samples(sensor, buttons, seconds):
+    """deep/light: LDO2 off, sleep until timer, A, B, or USB plug."""
+    _release_pins(buttons or ())
+    sensor.power_off()
+    hold = (sensor.ldo_pin(),) if config.use_deep_sleep() else None
+    power.sleep_interval(
+        seconds,
+        config.use_deep_sleep(),
+        preserve_dios=hold,
+    )
+
+
+def run(display, sensor):
+    """Single loop. Polls VBUS. SLEEP_MODE applies on USB and battery."""
     reason = power.wake_reason()
-    print("Battery wake:", reason)
     saved = persist.load() or {"page": 0}
     page = saved.get("page", 0)
     if reason == "timer" and saved.get("present"):
         battery.mark_present()
-    bat = battery.read()
-    if _battery_is_low(bat):
-        _halt_low_battery(display, sensor, saved, bat, reason)
-        return
-    saved["low_batt"] = False
-    force = reason in ("a", "boot")
-    if reason == "b":
+
+    usb = battery.usb_connected()
+    if saved.get("low_batt") and usb:
+        print("USB resume — clearing LOW BATT")
+        saved["low_batt"] = False
+        saved["usb"] = True
+        _show(display, saved, None, True, _now())
+
+    buttons = []
+    last_refresh_mono = -_MIN_EINK_S
+    next_due = time.monotonic()
+    last_usb = usb
+    print(
+        "Run usb={} sleep={} sample {}s".format(
+            usb, config.SLEEP_MODE, _sample_interval(usb)
+        )
+    )
+
+    if reason == "b" and not config.cpu_always_on():
         page = 1 - page
         saved["page"] = page
-        saved["usb"] = False
+        saved["usb"] = usb
+        print("Button B: page", page)
         _show(display, saved, None, True, _now())
-    else:
-        saved = _sample(sensor, False, page)
-        saved["page"] = page
-        if _battery_is_low(
-            {"voltage": saved.get("voltage"), "percent": saved.get("percent")}
-        ):
-            _halt_low_battery(display, sensor, saved, saved, reason)
+        _sleep_between_samples(sensor, buttons, _sample_interval(usb))
+        if config.use_deep_sleep():
             return
-        _show(display, saved, persist.load(), force, _now())
-    power.sleep_interval(config.SAMPLE_INTERVAL_S, config.use_deep_sleep())
+        next_due = time.monotonic()
+        reason = "timer"
+
+    while True:
+        usb = battery.usb_connected()
+        stay_awake = config.cpu_always_on()
+        interval = _sample_interval(usb)
+        now_mono = time.monotonic()
+
+        if usb != last_usb:
+            print("USB connected" if usb else "USB disconnected")
+            saved["usb"] = usb
+            last_usb = usb
+            _show(display, saved, None, True, _now())
+            last_refresh_mono = time.monotonic()
+            next_due = time.monotonic()
+            interval = _sample_interval(usb)
+
+        if stay_awake and not buttons:
+            buttons = _buttons()
+
+        force = False
+        flip = False
+        if buttons:
+            if _pressed(buttons[0]):
+                force = True
+                while _pressed(buttons[0]):
+                    time.sleep(0.05)
+            if _pressed(buttons[1]):
+                flip = True
+                while _pressed(buttons[1]):
+                    time.sleep(0.05)
+
+        due = now_mono >= next_due
+        if flip:
+            page = 1 - page
+            saved["page"] = page
+            saved["usb"] = usb
+            print("Button B: page", page)
+            _show(display, saved, None, True, _now())
+            last_refresh_mono = time.monotonic()
+        elif force or due:
+            previous = saved
+            saved = _sample(sensor, usb, page)
+            saved["page"] = page
+            if (not usb) and _battery_is_low(
+                {"voltage": saved.get("voltage"), "percent": saved.get("percent")}
+            ):
+                _release_pins(buttons)
+                _halt_low_battery(display, sensor, saved, saved, reason)
+                return
+            can_refresh = force or (now_mono - last_refresh_mono) >= _MIN_EINK_S
+            if can_refresh:
+                old_refresh = previous.get("refreshed_at")
+                saved = _show(display, saved, previous, force, _now())
+                if saved.get("refreshed_at") != old_refresh:
+                    last_refresh_mono = time.monotonic()
+            else:
+                persist.save(saved)
+            finished = time.monotonic()
+            if stay_awake:
+                if due:
+                    next_due += interval
+                    while next_due <= finished:
+                        next_due += interval
+                else:
+                    next_due = finished + interval
+            else:
+                _sleep_between_samples(sensor, buttons, interval)
+                buttons = []
+                if config.use_deep_sleep():
+                    return
+                next_due = time.monotonic()
+                reason = "timer"
+        elif stay_awake:
+            time.sleep(0.1)
 
 
 def main():
-    power.disable_rf()
     usb = battery.usb_connected()
+    reason = power.wake_reason()
     print("USB connected:" if usb else "On battery:", usb)
     print("Sleep mode:", config.SLEEP_MODE)
+    if config.VOLTAGE_LOG:
+        if reason == "boot":
+            vlog.begin_session()
+        else:
+            vlog.continue_session(_sample_interval(usb))
     display = display_ui.init_display()
-    sensor = sensor_mod.Sensor()
-    if usb:
-        run_usb(display, sensor)
-        return
-    while True:
-        run_battery(display, sensor)
-        if config.use_deep_sleep():
+    if not usb:
+        bat = battery.read()
+        saved = persist.load() or {"page": 0}
+        if _battery_is_low(bat):
+            sensor = sensor_mod.Sensor(start_on=False)
+            _halt_low_battery(display, sensor, saved, bat, reason)
             return
+    sensor = sensor_mod.Sensor(start_on=True)
+    run(display, sensor)
 
 
 main()

@@ -7,3 +7,6 @@ CIRCUITPY/
 .idea/
 .vscode/
 *.swp
+data/*.csv
+data/vlog.json
+firmware/*.csv

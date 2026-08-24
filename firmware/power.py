@@ -2,10 +2,12 @@ import time
 
 import alarm
 import board
+import digitalio
+import config
 
 
 def disable_rf():
-    """Keep Wi-Fi and Bluetooth off. We never connect; this powers the radios down."""
+    """Radios off. boot.py does this at reset; call again before sleep (light sleep does not re-run boot.py)."""
     try:
         import wifi
 
@@ -39,16 +41,48 @@ def wake_reason():
 def _interval_alarms(seconds):
     if seconds < 1:
         seconds = 1
-    time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + seconds)
-    pin_a = alarm.pin.PinAlarm(pin=board.D11, value=False, pull=True)
-    pin_b = alarm.pin.PinAlarm(pin=board.D12, value=False, pull=True)
-    return (time_alarm, pin_a, pin_b)
+    alarms = [
+        alarm.time.TimeAlarm(monotonic_time=time.monotonic() + seconds),
+        alarm.pin.PinAlarm(pin=board.D11, value=False, pull=True),
+        alarm.pin.PinAlarm(pin=board.D12, value=False, pull=True),
+    ]
+    try:
+        alarms.append(alarm.pin.PinAlarm(pin=board.VBUS, value=True, pull=False))
+    except Exception:
+        pass
+    return tuple(alarms)
 
 
-def deep_sleep(seconds):
-    """Lowest power. Restarts code.py on wake. RAM is lost except persist file."""
+def _enter_deep_sleep(alarms, preserve_dios):
     disable_rf()
-    alarm.exit_and_deep_sleep_until_alarms(*_interval_alarms(seconds))
+    dios = preserve_dios if preserve_dios else ()
+    try:
+        alarm.exit_and_deep_sleep_until_alarms(*alarms, preserve_dios=dios)
+    except TypeError:
+        alarm.exit_and_deep_sleep_until_alarms(*alarms)
+
+
+def claim_ldo2_off(existing=None):
+    """Own LDO2 as a driven-low output. Returns the pin for preserve_dios."""
+    if existing is not None:
+        try:
+            existing.value = False
+            print("LDO2 off (existing pin)")
+            return existing
+        except Exception:
+            try:
+                existing.deinit()
+            except Exception:
+                pass
+    pin = digitalio.DigitalInOut(board.LDO2)
+    pin.switch_to_output(value=False)
+    print("LDO2 off (claimed)")
+    return pin
+
+
+def deep_sleep(seconds, preserve_dios=None):
+    """Lowest power. Restarts code.py on wake. RAM is lost except persist file."""
+    _enter_deep_sleep(_interval_alarms(seconds), preserve_dios)
 
 
 def light_sleep(seconds):
@@ -57,25 +91,51 @@ def light_sleep(seconds):
     alarm.light_sleep_until_alarms(*_interval_alarms(seconds))
 
 
-def sleep_interval(seconds, deep):
+def sleep_interval(seconds, deep=None, preserve_dios=None):
+    if config.cpu_always_on():
+        return
+    if deep is None:
+        deep = config.use_deep_sleep()
     if deep:
         print("Deep sleep {}s".format(seconds))
-        deep_sleep(seconds)
+        deep_sleep(seconds, preserve_dios=preserve_dios)
         return
     print("Light sleep {}s".format(seconds))
     light_sleep(seconds)
 
 
-def halt_until_usb(seconds):
+def halt_until_usb(seconds, ldo_pin=None):
     """Deep sleep until USB is plugged in, button A, or a long recheck timer.
 
-    The FeatherS3[D] cannot software-latch the 3.3 V EN pin; deep sleep is the
-    lowest power state firmware can enter. The e-ink image stays.
+    Halt is always deep sleep (even if SLEEP_MODE is light). LDO2 must be a
+    driven-low output passed as preserve_dios or the pad resets and the
+    Plantower comes back on.
     """
     if seconds < 1:
         seconds = 1
-    disable_rf()
+    ldo_pin = claim_ldo2_off(ldo_pin)
+    try:
+        import supervisor
+
+        print("Halt usb_connected", supervisor.runtime.usb_connected)
+    except Exception:
+        pass
+    print("Halt sleep {}s (wake USB or A) LDO2={}".format(seconds, ldo_pin.value))
     time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + seconds)
-    pin_a = alarm.pin.PinAlarm(pin=board.D11, value=False, pull=True)
-    pin_usb = alarm.pin.PinAlarm(pin=board.VBUS, value=True, pull=False)
-    alarm.exit_and_deep_sleep_until_alarms(time_alarm, pin_a, pin_usb)
+    alarms = [time_alarm]
+    try:
+        alarms.append(alarm.pin.PinAlarm(pin=board.D11, value=False, pull=True))
+    except Exception as exc:
+        print("Halt A alarm skipped:", exc)
+    try:
+        alarms.append(alarm.pin.PinAlarm(pin=board.VBUS, value=True, pull=False))
+    except Exception as exc:
+        print("Halt VBUS alarm skipped:", exc)
+    try:
+        _enter_deep_sleep(tuple(alarms), (ldo_pin,))
+    except Exception as exc:
+        print("Halt deep sleep failed:", exc)
+        # Do not return with the fan on. Idle here with LDO2 held off.
+        while True:
+            ldo_pin.value = False
+            time.sleep(10)

@@ -102,6 +102,12 @@ Wi-Fi and Bluetooth are forced off at boot (`boot.py`) and again before sleep. N
 
 - `"deep"` (default) — lowest current; `code.py` restarts each wake
 - `"light"` — CPU paused, RAM kept, faster wake, more sleep current (tens of mA vs µA)
+- `"no"` — CPU stays awake; LDO2/sensor on only for each sample (stays on if the interval is under 30 s)
+- `"full"` — CPU and PMSA003I/LDO2 stay on
+
+Each sample appends one row to `CIRCUITPY/data/voltN.csv` (voltage, %, USB, PM1/2.5/10, particle bins). A new number is used on each power-up / USB reload; older files are kept. Copy `data/` off the drive into this repo’s `data/` folder. Set `VOLTAGE_LOG = 0` to disable.
+
+CircuitPython cannot write CIRCUITPY while the Mac has it mounted as a normal disk. `boot.py` remounts the drive **MCU-writable** (Finder shows it read-only — you can still copy logs off). **Hold A at reset** when you need to copy firmware onto the board.
 
 ## Docs in this repo
 
