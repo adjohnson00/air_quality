@@ -1,58 +1,82 @@
-# 3D-printed enclosure
+# 3D-printed enclosure (rev 2)
 
-Two-piece FDM case for the FeatherS3[D] + 2.9" eInk FeatherWing + PMSA003I + 400 mAh LiPo.
+Two-piece FDM case. Display faces up. USB-C out the **bottom**. RP-SMA antenna bulkhead on the **left**. PMSA003I inline on the **right**, I/O at the **top**.
 
 ![Base](preview_base.png)
 
 ![Lid](preview_lid.png)
 
-Outside is about **143 × 54 × 25 mm**. Display faces up. USB-C is on the left. The Plantower sits in its own bay on the right with intake/exhaust slots.
+Outside is about **145 × 56 × 45 mm**.
+
+```
+  TOP (+Y)     intake ○ | ○ exhaust     (drill later; raised rings)
+               ─────────┴─────────
+  LEFT (-X)    [RP-SMA]  [ 2.9" eInk ]  [ PMSA003I ]
+  BOTTOM (-Y)            [ USB-C     ]
+  UNDER STACK            [ battery cage, 1/2" ]
+```
 
 | File | What |
 | --- | --- |
-| [aq_enclosure_base.stl](aq_enclosure_base.stl) | Floor, USB hole, battery corral, wing pins, sensor posts, vents, A/B/C holes |
-| [aq_enclosure_lid.stl](aq_enclosure_lid.stl) | Display window + bezel, inner lip, sensor vents |
-| [generate.py](generate.py) | Parametric generator (edit numbers, re-run) |
+| [aq_enclosure_base.stl](aq_enclosure_base.stl) | Battery cage, USB opening, SMA pad, sensor shelf + 9/16" ridge, intake/exhaust divider |
+| [aq_enclosure_lid.stl](aq_enclosure_lid.stl) | Window, inner + outer wing pockets, filled mounting bosses |
+| [generate.py](generate.py) | Parametric generator |
+
+## What changed vs rev 1
+
+- Stack is **1"** (Feather + eInk + USB out the bottom). Battery is **not** in the sandwich.
+- Battery lives in a **low-lipped cage** under the stack: 3/8" cell, **1/2"** cage height. Interior of the cage is 70 × 38 mm — measure your new pack and set `BAT_L` / `BAT_W` if it is smaller/larger.
+- **Lid mounts the display.** Same four bosses work two ways:
+  - **Inside** the lid → glass in the window, buttons hidden
+  - **Outside** the lid → wing sits in the outer pocket, buttons reachable
+- **RP-SMA** (uFL pigtail, threaded barrel) on the left end. Printed **solid** with a raised ring; drill 6.5 mm after printing.
+- **No printed through-holes** except USB-C. Wing, sensor, SMA, and air ports are filled pads at wall thickness with a raised ring as a drill guide.
+- Sensor is inline to the right. A wall splits **intake** (hole in the blue aluminum) from **exhaust** (black fan). Each path ends at a raised ring on the top wall — drill those after you confirm alignment. A **9/16" ridge** over the module mounting holes sits snug on the can.
+
+## Drill later
+
+| Mark | Size | Where |
+| --- | --- | --- |
+| 4 rings on the lid | 2.5 mm | eInk FeatherWing corners |
+| 4 rings on the sensor shelf | 2.5 mm | PMSA003I PCB |
+| 1 ring on the left wall | 6.5 mm | RP-SMA bulkhead |
+| 2 rings on the top wall | ~8–10 mm | intake (left of the divider) and exhaust (right, fan) |
 
 ## Print
 
 | Setting | Value |
 | --- | --- |
-| Material | PLA is fine; PETG if it will sit in a hot car |
+| Material | PLA; PETG if it will sit in a hot car |
 | Layer | 0.20 mm |
 | Walls | 3 |
 | Infill | 20% gyroid |
-| Supports | None if you print as exported |
+| Supports | None |
 | Base | floor down (feet on the bed) |
-| Lid | **window face on the bed** so the bezel is smooth |
+| Lid | **outer face / window on the bed** so the outside pocket is smooth |
 
-The lid lip is 0.35 mm undersize. If it is too tight, sand the lip; if it rattles, add a wrap of tape or reprint `FIT = 0.25` in `generate.py`.
+Lid lip is 0.35 mm undersize (`FIT`). Sand if tight.
 
 ## Assembly
 
-1. Drop the **400 mAh** pack into the rectangular corral (lips on the long sides). JST toward the USB end.
-2. Plug the STEMMA cable into **I2C2** on the Feather, then seat the Feather + eInk stack on the four pins (they go through the wing’s 2.5 mm holes). USB-C should line up with the left wall hole.
-3. Route the STEMMA through the notch in the partition into the sensor bay.
-4. Seat the PMSA003I on the four shorter pins. The blue can should sit next to the side slots, not buried.
-5. Snap the lid on. The window bezel should rest on the e-ink glass, not the PCB ears.
-
-A/B/C poke through the back wall. If a hole is a millimetre off, file it — those positions were taken from the wing fab drawing, not a caliper on your board.
-
-## Airflow
-
-The Plantower needs a path **through** the metal can (fan in, exhaust out). The right-end wall and the back wall of the sensor bay each have four 16 × 2.4 mm slots, and the lid has three slots over the can. Do not block those. Do not seal the sensor in a closed pocket.
+1. Drop the pack into the cage under the display bay, JST toward USB.
+2. uFL pigtail on the Feather; RP-SMA barrel waits until you drill the left pad.
+3. STEMMA into I2C2, cable through the partition notch (back/right of the display).
+4. **Inside mount:** seat the wing in the inner lid pocket, glass in the window, screw after drilling. Buttons face the battery cage.
+5. **Outside mount:** seat the wing in the outer lid pocket, glass facing out, buttons on the back of the wing in the open. Screw after drilling.
+6. PMSA003I on the right-hand shelf. Fan toward the **top-right** port, blue intake hole toward the **top-left** port. The ridge should rest on the can. Snap the lid on.
+7. Drill intake and exhaust only after a dry fit so the holes line up with the fan and the aluminum inlet. Do not let those two volumes mix.
 
 ## Regenerating
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install trimesh manifold3d numpy
 .venv/bin/python hardware/enclosure/generate.py
 ```
 
-Tweaks worth knowing:
-
-- `FIT` — lid looseness
-- `USB_Z` / `USB_W` / `USB_H` — if the USB-C hole is high/low/tight
-- `BTN_XS` — A/B/C hole positions along the wing
-- `DISP_L` / `DISP_W` — window (active area is 66.9 × 29.1 mm)
+| Knob | Default | Meaning |
+| --- | --- | --- |
+| `BAT_L` / `BAT_W` | 70 / 38 | Cage inside, mm |
+| `BAT_CAGE_H` | 12.7 | 1/2" |
+| `STACK_H` | 25.4 | 1" electronics |
+| `RIDGE_H` | 14.3 | 9/16" over the sensor |
+| `SMA_Z` | cage + 10 | Height of the SMA pad |
+| `FIT` | 0.35 | Lid looseness |

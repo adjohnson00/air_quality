@@ -51,7 +51,7 @@ Unexpected Maker’s ESP32-S3 Feather. Dual 240 MHz cores, 16 MB flash, 8 MB PSR
 
 - **A** — force a sample now
 - **B** — flip between the AQI card and particle-count bins immediately (press B again to go back)
-- **C** — unused
+- **C** — BLE pairing window (hold ~1.5 s to unpair)
 - **Reset** — reboots the Feather
 
 ### PMSA003I — the smoke sensor
@@ -96,7 +96,7 @@ The 2.9" card shows a large AQI number and category, a 4-gray bar, then PM1.0 / 
 | Battery | 60 seconds, 5 s warmup | Sleeps between samples (`SLEEP_MODE`); ~8–13% sensor duty |
 | Cell ≤ 3.2 V | Halt | LOW BATT card, **deep** sleep until USB (or 1 h recheck) |
 
-Wi-Fi and Bluetooth are forced off at boot (`boot.py`) and again before sleep. Nothing in this firmware connects.
+Wi-Fi stays off. Bluetooth is off at boot and in sleep. The advertised name is always **`AQ-monitor`**. Press **C** to open a pairing window. A successful authorized `GET` (see `BLE_PIN`) marks the phone as paired; then the board advertises briefly on a schedule so you can pull the log without pressing C. Long-press **C** to unpair. Periodic advertising costs pack life — set `BLE_PERIODIC_S = 0` to advertise only after samples / C.
 
 `SLEEP_MODE` in `settings.toml`:
 
@@ -111,10 +111,11 @@ CircuitPython cannot write CIRCUITPY while the Mac has it mounted as a normal di
 
 ## Docs in this repo
 
+- [docs/firmware-loop.html](docs/firmware-loop.html) — how the main loop, sensing, and BLE fit together (open in a browser)
 - [docs/project.md](docs/project.md) — original BOM notes
 - [docs/build-plan.md](docs/build-plan.md) — pin map, power budget, firmware phases
 - [hardware/assembly.md](hardware/assembly.md) — how to stack the boards
-- [hardware/enclosure/](hardware/enclosure/) — 3D-printed case (STLs + generator)
+- [hardware/enclosure/](hardware/enclosure/) — 3D-printed case, rev 2 (1" stack, battery cage, RP-SMA, split airflow)
 - [docs/](docs/) — datasheets and Adafruit learn guides
 
 ## Firmware
@@ -127,7 +128,7 @@ With the board mounted as `CIRCUITPY`:
 
 ```bash
 pip install circup
-circup install adafruit_pm25 adafruit_epd adafruit_max1704x adafruit_register neopixel
+circup install adafruit_pm25 adafruit_epd adafruit_max1704x adafruit_register neopixel adafruit_ble
 ```
 
 Copy `firmware/font5x8.bin` to the root of `CIRCUITPY`. The e-ink text routines need it.
@@ -142,5 +143,18 @@ Copy `firmware/font5x8.bin` to the root of `CIRCUITPY`. The e-ink text routines 
 ### Tests (no hardware)
 
 ```bash
-python3 -m unittest tests.test_aqi
+python3 -m unittest tests.test_aqi tests.test_battery tests.test_vlog tests.test_ble_xfer
 ```
+
+### BLE log dump (iPhone)
+
+Uses [Bluefruit LE Connect](https://learn.adafruit.com/bluefruit-le-connect) (central mode).
+
+1. `circup install adafruit_ble` (hold **A** at reset to copy files). Without that library, C shows `FAIL` on the card.
+2. Press **C** anytime, including during sensor warmup (the 30 s wait runs in the main loop, so buttons and BLE still work). Footer shows `PAIR`. Connect to **`AQ-monitor`**, open **UART**, send `GET`. The UART session stays up until the phone disconnects; the board only polls `connected`. After a successful GET it stays awake and advertising (sensor/LDO2 off between samples) so you can reconnect without pressing C. Long-press **C** to unpair and return to `SLEEP_MODE`.
+3. Send `GET` (or `GET yourpin` if `BLE_PIN` is set). Wait until `# AQ END` — a long log takes tens of seconds (20-byte BLE notifies). Copy after that; missing commas or a file that stops mid-line means it was still sending.
+4. After a successful GET, the board can advertise on a schedule so you can reconnect without pressing C. Long-press **C** to unpair. Keep UART in the foreground.
+
+Do not pair the board in iOS Settings. USB copy of `/data/` is still the bulk path. Set `BLE_PIN` on the device only (not in git) if you do not want a nearby phone to dump the log with a plain `GET`.
+
+The FeatherS3[D] has an onboard 3D antenna **and** a u.FL jack, selected by GPIO41. Firmware drives that pin **low** so the onboard antenna is used (`BLE_ANTENNA = "internal"`). A floating switch can dump TX into the empty u.FL and show up on the phone as about **−95 dBm**. Advertising TX power is `BLE_TX_POWER` (default **9 dBm**); CircuitPython’s `BLERadio` helper otherwise always advertises at 0 dBm. You do not need an external antenna yet. If RSSI stays in the −90s after a copy/reset, check that nothing metal covers the 3D antenna; then try `BLE_TX_POWER = 20`. Only then set `BLE_ANTENNA = "external"` with a 2.4 GHz whip on the u.FL — transmitting into an open u.FL can stress the PA.
