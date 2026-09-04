@@ -25,7 +25,7 @@ Outside is about **145 × 56 × 45 mm**.
 ## What changed vs rev 1
 
 - Stack is **1"** (Feather + eInk + USB out the bottom). Battery is **not** in the sandwich.
-- Battery lives in a **low-lipped cage** under the stack: 3/8" cell, **1/2"** cage height. Interior of the cage is 70 × 38 mm — measure your new pack and set `BAT_L` / `BAT_W` if it is smaller/larger.
+- Battery lives in a **low-lipped cage** under the stack: pack is **2.00" × 1-5/16" × 3/8"**, cage interior **52.8 × 35.3 × 12.7 mm** (about 2 mm of rattle room, 1/2" height).
 - **Lid mounts the display.** Same four bosses work two ways:
   - **Inside** the lid → glass in the window, buttons hidden
   - **Outside** the lid → wing sits in the outer pocket, buttons reachable
@@ -74,7 +74,7 @@ Lid lip is 0.35 mm undersize (`FIT`). Sand if tight.
 
 | Knob | Default | Meaning |
 | --- | --- | --- |
-| `BAT_L` / `BAT_W` | 70 / 38 | Cage inside, mm |
+| `BAT_L` / `BAT_W` | 52.8 / 35.3 | Cage inside, mm (2.00" × 1-5/16" pack + clearance) |
 | `BAT_CAGE_H` | 12.7 | 1/2" |
 | `STACK_H` | 25.4 | 1" electronics |
 | `RIDGE_H` | 14.3 | 9/16" over the sensor |

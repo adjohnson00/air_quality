@@ -44,9 +44,9 @@ WING_HOLE_DY = 42.0
 DISP_L = 67.2
 DISP_W = 29.4
 
-# Updated pack: 3/8\" thick. XY unknown — cage under the whole wing, generous.
-BAT_L = 70.0
-BAT_W = 38.0
+# Pack: 2.00\" x 1-5/16\" x 3/8\". Cage interior adds ~2 mm clearance.
+BAT_L = 52.8
+BAT_W = 35.3
 BAT_LIP = 1.2
 BAT_WALL = 1.6
 
