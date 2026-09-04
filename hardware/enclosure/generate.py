@@ -5,9 +5,9 @@ Layout (display facing +Z):
   LEFT (-X)   antenna RP-SMA bulkhead (filled, drill later)
   BOTTOM (-Y) USB-C opening (stack connector comes out the bottom)
   CENTER      1\" Feather + eInk stack over a 1/2\" battery cage
-  RIGHT (+X)  PMSA003I inline; I/O at the TOP (+Y)
-              black fan = exhaust, blue-aluminum hole = intake
-              divider keeps those two paths apart
+  RIGHT (+X)  PMSA003I on the FLOOR; STEMMA at the BOTTOM (-Y),
+              I/O at the TOP (+Y). Black fan = exhaust, blue-aluminum
+              hole = intake. Divider keeps those two paths apart.
 
 Mounting holes and air ports print SOLID at wall thickness with a raised
 ring as a drill guide. USB-C is a real opening.
@@ -50,10 +50,22 @@ BAT_W = 35.3
 BAT_LIP = 1.2
 BAT_WALL = 1.6
 
-SENS_L = 51.0
-SENS_W = 35.5
-SENS_HOLE_DX = 45.7
-SENS_HOLE_DY = 30.5
+# PMSA003I breakout (Adafruit 4632). Eagle: 35.56 x 50.80 mm, header at y=0,
+# can/fan at y=50.8. In the case the 50.8 mm axis runs along +Y so STEMMA is
+# at the bottom of the display (USB, -Y) and I/O is at the top (+Y).
+SENS_W = 35.56               # board width, along enclosure X
+SENS_L = 50.80               # header → can, along enclosure Y
+# M2.5 holes in board-local mm (origin = header-left corner).
+# 3 corners + 1 on the output-side edge (not a 4-corner rectangle).
+# "inside" = open on the PCB (screw down from above). "outside" = under the
+# can (drill from the bottom, screw up).
+SENS_HOLES = (
+    (2.54, 2.54, "inside"),     # header left
+    (33.02, 2.54, "inside"),    # header right
+    (2.754, 48.3, "outside"),   # can-end left corner
+    (32.754, 15.3, "outside"),  # output side, mid-edge
+)
+SENS_STEMMA = (2.54, 8.89)   # left QT jack, toward the display partition
 GAP = 6.0
 PLENUM = 9.0                 # intake/exhaust channels at +Y of the sensor
 CHANNEL_LIP = 3.5            # how far the 9/16\" lip sits onto the can (not a roof)
@@ -78,8 +90,8 @@ AIR_RING = 6.5
 
 FEET = 2.0
 
-INNER_X = WING_L + GAP + SENS_L + 4.0
-INNER_Y = max(WING_W, SENS_W + PLENUM) + 4.0
+INNER_X = WING_L + GAP + SENS_W + 4.0
+INNER_Y = max(WING_W, SENS_L + PLENUM) + 4.0
 INNER_Z = BAT_CAGE_H + STACK_H + 3.0
 
 OUTER_X = INNER_X + 2 * WALL
@@ -118,38 +130,56 @@ def _diff(a, b):
     return a.difference(b, engine="manifold")
 
 
-def _filled_pad(cx, cy, cz, axis="z", pad=BOSS_R, ring=RING_R, h=WALL, rh=RING_H):
-    """Solid pad + raised ring. Drill the pad later."""
+def _filled_pad(cx, cy, cz, axis="z", pad=BOSS_R, ring=RING_R, h=WALL, rh=RING_H, ring_dir=1):
+    """Solid pad + raised ring. Drill the pad later. ring_dir +1 = +axis face."""
     body = _cyl(pad, h, cx, cy, cz, axis=axis)
-    # ring sits on the +axis face
+    s = 1 if ring_dir >= 0 else -1
     if axis == "z":
-        r = _cyl(ring, rh, cx, cy, cz + h / 2 + rh / 2 - 0.05, axis=axis)
-        hole = _cyl(pad + 0.15, rh + 0.2, cx, cy, cz + h / 2 + rh / 2 - 0.05, axis=axis)
+        rz = cz + s * (h / 2 + rh / 2 - 0.05)
+        r = _cyl(ring, rh, cx, cy, rz, axis=axis)
+        hole = _cyl(pad + 0.15, rh + 0.2, cx, cy, rz, axis=axis)
     elif axis == "x":
-        r = _cyl(ring, rh, cx + h / 2 + rh / 2 - 0.05, cy, cz, axis=axis)
-        hole = _cyl(pad + 0.15, rh + 0.2, cx + h / 2 + rh / 2 - 0.05, cy, cz, axis=axis)
+        rx = cx + s * (h / 2 + rh / 2 - 0.05)
+        r = _cyl(ring, rh, rx, cy, cz, axis=axis)
+        hole = _cyl(pad + 0.15, rh + 0.2, rx, cy, cz, axis=axis)
     else:
-        r = _cyl(ring, rh, cx, cy + h / 2 + rh / 2 - 0.05, cz, axis=axis)
-        hole = _cyl(pad + 0.15, rh + 0.2, cx, cy + h / 2 + rh / 2 - 0.05, cz, axis=axis)
+        ry = cy + s * (h / 2 + rh / 2 - 0.05)
+        r = _cyl(ring, rh, cx, ry, cz, axis=axis)
+        hole = _cyl(pad + 0.15, rh + 0.2, cx, ry, cz, axis=axis)
     r = _diff(r, hole)
     return _union([body, r])
+
+
+def _ring(cx, cy, cz, pad=BOSS_R, ring=RING_R, rh=RING_H):
+    """Raised drill-guide ring on the XY plane, centered at cz."""
+    r = _cyl(ring, rh, cx, cy, cz)
+    return _diff(r, _cyl(pad + 0.15, rh + 0.2, cx, cy, cz))
 
 
 def _bays():
     """Display bay center and sensor bay center."""
     wing_cx = -INNER_X / 2 + WING_L / 2 + 1.5
-    wing_cy = -2.0
-    # Sensor inline to the right; shifted -Y so plenums sit at +Y (top)
-    sens_cx = INNER_X / 2 - SENS_L / 2 - 1.0
-    sens_cy = -INNER_Y / 2 + SENS_W / 2 + 2.0
+    # USB / bottom of the display sits on the -Y wall
+    wing_cy = -INNER_Y / 2 + WING_W / 2 + 1.5
+    # Sensor to the right; header/STEMMA at -Y, can/I/O at +Y
+    sens_cx = INNER_X / 2 - SENS_W / 2 - 1.0
+    sens_cy = -INNER_Y / 2 + SENS_L / 2 + 2.0
     return wing_cx, wing_cy, sens_cx, sens_cy
+
+
+def _sens_xy(sens_cx, sens_cy, px, py):
+    """Board-local mm (header-left origin) → enclosure XY."""
+    return (
+        sens_cx + (px - SENS_W / 2),
+        sens_cy + (py - SENS_L / 2),
+    )
 
 
 def make_base():
     ox, oy = OUTER_X, OUTER_Y
     wing_cx, wing_cy, sens_cx, sens_cy = _bays()
     floor_z = WALL
-    shelf_z = WALL + BAT_CAGE_H  # top of battery cage / sensor shelf
+    shelf_z = WALL + BAT_CAGE_H  # top of battery cage (USB / stack height)
 
     body = _box(ox, oy, WALL + INNER_Z, 0, 0, (WALL + INNER_Z) / 2)
     cavity = _box(INNER_X, INNER_Y, INNER_Z + 2, 0, 0, WALL + INNER_Z / 2 + 1)
@@ -188,38 +218,40 @@ def make_base():
         )
     base = _union([base] + cage)
 
-    # --- partition display | sensor, STEMMA notch at the back (+Y) ---
-    px = (wing_cx + WING_L / 2 + sens_cx - SENS_L / 2) / 2
+    # --- partition display | sensor, STEMMA notch at the BOTTOM of the display ---
+    px = (wing_cx + WING_L / 2 + sens_cx - SENS_W / 2) / 2
     part_h = INNER_Z - LIP_H - 1
     partition = _box(WALL, INNER_Y - 0.6, part_h, px, 0, floor_z + part_h / 2)
-    notch = _box(WALL + 3, 8.0, 8.0, px, INNER_Y / 2 - 10, shelf_z + 4)
+    _stemma_x, stemma_y = _sens_xy(sens_cx, sens_cy, *SENS_STEMMA)
+    notch = _box(
+        WALL + 3,
+        12.0,
+        14.0,
+        px,
+        stemma_y,
+        floor_z + 7.0,
+    )
     partition = _diff(partition, notch)
     base = _union([base, partition])
 
-    # --- sensor shelf at battery-cage height ---
-    shelf = _box(SENS_L + 3, SENS_W + 3, 1.6, sens_cx, sens_cy, shelf_z - 0.8)
-    base = _union([base, shelf])
-
-    # Filled sensor mounting pads (drill later) on the shelf
-    pads = []
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            pads.append(
-                _filled_pad(
-                    sens_cx + sx * SENS_HOLE_DX / 2,
-                    sens_cy + sy * SENS_HOLE_DY / 2,
-                    shelf_z + WALL / 2,
-                    h=WALL,
-                )
-            )
-    base = _union([base] + pads)
+    # --- PMSA003I on the floor (no raised shelf) ---
+    # Interior rings at all 4 holes so the PCB sits level (~0.4 mm).
+    # The two under-can holes also get a ring on the OUTSIDE of the floor
+    # so you can drill from below and screw up.
+    marks = []
+    for hx, hy, how in SENS_HOLES:
+        x, y = _sens_xy(sens_cx, sens_cy, hx, hy)
+        marks.append(_ring(x, y, WALL + RING_H / 2 - 0.05, rh=0.4))
+        if how == "outside":
+            marks.append(_ring(x, y, -RING_H / 2 + 0.05, rh=0.7))
+    base = _union([base] + marks)
 
     # Air ducts at +Y of the sensor. The module itself is OPEN on top.
     # A 9/16" lip sits a few mm onto the can and roofs the plenum to the
     # +Y wall. Each roof is a bridge: intake = partition→divider, exhaust
     # = divider→+X wall, both fused into the +Y wall. Slicer supports fill
     # the ducts and the 3.5 mm overhang onto the can; pull them before assembly.
-    y_can = sens_cy + SENS_W / 2
+    y_can = sens_cy + SENS_L / 2
     y_inner = INNER_Y / 2
     wall_t = 1.8
     into_wall = 1.0
@@ -228,7 +260,7 @@ def make_base():
     lip_y1 = y_inner + into_wall
     lip_sy = lip_y1 - lip_y0
     lip_cy = (lip_y0 + lip_y1) / 2
-    lip_top = shelf_z + RIDGE_H + CHANNEL_LIP_T
+    lip_top = floor_z + RIDGE_H + CHANNEL_LIP_T
     lip_z = lip_top - CHANNEL_LIP_T / 2
 
     # Divider lives in the plenum only (not through the can). A 0.6 mm
@@ -279,9 +311,9 @@ def make_base():
     base = _union([base, sma])
 
     # Air ports on the TOP (+Y) wall: intake (left of divider) and exhaust (right)
-    air_z = shelf_z + RIDGE_H * 0.45
-    intake_x = sens_cx - SENS_L / 4
-    exhaust_x = sens_cx + SENS_L / 4
+    air_z = floor_z + RIDGE_H * 0.55
+    intake_x = sens_cx - SENS_W / 4
+    exhaust_x = sens_cx + SENS_W / 4
     for ax in (intake_x, exhaust_x):
         pad = _filled_pad(
             ax,
@@ -433,7 +465,7 @@ def main():
     _preview(
         base,
         OUT / "preview_base.png",
-        "base — USB bottom, SMA left, channel lips over the AQI ports",
+        "base — USB bottom, AQI on the floor, channel lips at +Y",
         elev=28,
         azim=-48,
     )
