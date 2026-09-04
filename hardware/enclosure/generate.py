@@ -5,9 +5,10 @@ Layout (display facing +Z):
   LEFT (-X)   antenna RP-SMA bulkhead (filled, drill later)
   BOTTOM (-Y) USB-C opening (stack connector comes out the bottom)
   CENTER      1\" Feather + eInk stack over a 1/2\" battery cage
-  RIGHT (+X)  PMSA003I on the FLOOR; STEMMA at the BOTTOM (-Y),
-              I/O at the TOP (+Y). Black fan = exhaust, blue-aluminum
-              hole = intake. Divider keeps those two paths apart.
+  RIGHT (+X)  PMSA003I on the FLOOR, 2\" axis away from the display.
+              Two corner holes on the TOP (+Y) edge, third corner at
+              the BOTTOM nearest the display. I/O channels on +Y.
+              Divider is 7/8\" from the far (+X) end.
 
 Mounting holes and air ports print SOLID at wall thickness with a raised
 ring as a drill guide. USB-C is a real opening.
@@ -51,25 +52,27 @@ BAT_LIP = 1.2
 BAT_WALL = 1.6
 
 # PMSA003I breakout (Adafruit 4632). Eagle: 35.56 x 50.80 mm, header at y=0,
-# can/fan at y=50.8. In the case the 50.8 mm axis runs along +Y so STEMMA is
-# at the bottom of the display (USB, -Y) and I/O is at the top (+Y).
-SENS_W = 35.56               # board width, along enclosure X
-SENS_L = 50.80               # header → can, along enclosure Y
+# can/fan at y=50.8. In the case the 2\" axis runs along +X (header toward
+# the display, can at the far wall). PCB-left edge is the TOP of the display
+# so two corner holes sit on +Y and the third is at -Y nearest the display.
+SENS_W = 35.56               # board width (PCB x) → enclosure Y
+SENS_L = 50.80               # header → can (PCB y) → enclosure X
 # M2.5 holes in board-local mm (origin = header-left corner).
 # 3 corners + 1 on the output-side edge (not a 4-corner rectangle).
 # "inside" = open on the PCB (screw down from above). "outside" = under the
 # can (drill from the bottom, screw up).
 SENS_HOLES = (
-    (2.54, 2.54, "inside"),     # header left
-    (33.02, 2.54, "inside"),    # header right
-    (2.754, 48.3, "outside"),   # can-end left corner
-    (32.754, 15.3, "outside"),  # output side, mid-edge
+    (2.54, 2.54, "inside"),     # header left  → top, near display
+    (33.02, 2.54, "inside"),    # header right → bottom, near display
+    (2.754, 48.3, "outside"),   # can-end left → top, far end
+    (32.754, 15.3, "outside"),  # output-side edge → bottom
 )
-SENS_STEMMA = (2.54, 8.89)   # left QT jack, toward the display partition
+SENS_STEMMA = (33.02, 8.89)  # QT jack on the bottom edge, near the display
 GAP = 6.0
 PLENUM = 9.0                 # intake/exhaust channels at +Y of the sensor
 CHANNEL_LIP = 3.5            # how far the 9/16\" lip sits onto the can (not a roof)
 CHANNEL_LIP_T = 1.8          # lip thickness; roofs the air channel only
+DIV_FROM_FAR = 0.875 * IN    # 7/8\" from the far end (1-1/8\" from the display side)
 
 # RP-SMA bulkhead: ~6.5 mm drill, 1/4-36 thread. Print filled.
 SMA_DRILL = 6.5
@@ -90,8 +93,8 @@ AIR_RING = 6.5
 
 FEET = 2.0
 
-INNER_X = WING_L + GAP + SENS_W + 4.0
-INNER_Y = max(WING_W, SENS_L + PLENUM) + 4.0
+INNER_X = WING_L + GAP + SENS_L + 4.0
+INNER_Y = max(WING_W, SENS_W + PLENUM) + 4.0
 INNER_Z = BAT_CAGE_H + STACK_H + 3.0
 
 OUTER_X = INNER_X + 2 * WALL
@@ -161,17 +164,21 @@ def _bays():
     wing_cx = -INNER_X / 2 + WING_L / 2 + 1.5
     # USB / bottom of the display sits on the -Y wall
     wing_cy = -INNER_Y / 2 + WING_W / 2 + 1.5
-    # Sensor to the right; header/STEMMA at -Y, can/I/O at +Y
-    sens_cx = INNER_X / 2 - SENS_W / 2 - 1.0
-    sens_cy = -INNER_Y / 2 + SENS_L / 2 + 2.0
+    # Sensor to the right; 2\" axis along +X, shifted -Y so plenums sit at +Y
+    sens_cx = INNER_X / 2 - SENS_L / 2 - 1.0
+    sens_cy = -INNER_Y / 2 + SENS_W / 2 + 2.0
     return wing_cx, wing_cy, sens_cx, sens_cy
 
 
 def _sens_xy(sens_cx, sens_cy, px, py):
-    """Board-local mm (header-left origin) → enclosure XY."""
+    """Board-local mm (header-left origin) → enclosure XY.
+
+    Header toward the display (-X), can toward +X.
+    PCB left edge at +Y (top of display), right edge at -Y.
+    """
     return (
-        sens_cx + (px - SENS_W / 2),
-        sens_cy + (py - SENS_L / 2),
+        sens_cx + (py - SENS_L / 2),
+        sens_cy + (SENS_W / 2 - px),
     )
 
 
@@ -219,7 +226,7 @@ def make_base():
     base = _union([base] + cage)
 
     # --- partition display | sensor, STEMMA notch at the BOTTOM of the display ---
-    px = (wing_cx + WING_L / 2 + sens_cx - SENS_W / 2) / 2
+    px = (wing_cx + WING_L / 2 + sens_cx - SENS_L / 2) / 2
     part_h = INNER_Z - LIP_H - 1
     partition = _box(WALL, INNER_Y - 0.6, part_h, px, 0, floor_z + part_h / 2)
     _stemma_x, stemma_y = _sens_xy(sens_cx, sens_cy, *SENS_STEMMA)
@@ -246,17 +253,18 @@ def make_base():
             marks.append(_ring(x, y, -RING_H / 2 + 0.05, rh=0.7))
     base = _union([base] + marks)
 
-    # Air ducts at +Y of the sensor. The module itself is OPEN on top.
-    # A 9/16" lip sits a few mm onto the can and roofs the plenum to the
-    # +Y wall. Each roof is a bridge: intake = partition→divider, exhaust
-    # = divider→+X wall, both fused into the +Y wall. Slicer supports fill
-    # the ducts and the 3.5 mm overhang onto the can; pull them before assembly.
-    y_can = sens_cy + SENS_L / 2
+    # Air ducts at +Y (top of the display). Module open on top. A 9/16"
+    # lip sits a few mm onto the can and roofs the plenum to the +Y wall.
+    # Divider is 7/8" from the far end: intake toward the display, exhaust
+    # (fan) toward +X. Slicer supports fill the ducts; pull before assembly.
+    y_top = sens_cy + SENS_W / 2
     y_inner = INNER_Y / 2
     wall_t = 1.8
     into_wall = 1.0
+    far_x = sens_cx + SENS_L / 2
+    divider_x = far_x - DIV_FROM_FAR
 
-    lip_y0 = y_can - CHANNEL_LIP
+    lip_y0 = y_top - CHANNEL_LIP
     lip_y1 = y_inner + into_wall
     lip_sy = lip_y1 - lip_y0
     lip_cy = (lip_y0 + lip_y1) / 2
@@ -266,18 +274,18 @@ def make_base():
     # Divider lives in the plenum only (not through the can). A 0.6 mm
     # kiss onto the +Y face seals intake from exhaust at the I/O.
     duct_h = lip_top - floor_z
-    div_y0 = y_can - 0.6
+    div_y0 = y_top - 0.6
     div_sy = lip_y1 - div_y0
     div_cy = (div_y0 + lip_y1) / 2
-    divider = _box(wall_t, div_sy, duct_h, sens_cx, div_cy, floor_z + duct_h / 2)
+    divider = _box(wall_t, div_sy, duct_h, divider_x, div_cy, floor_z + duct_h / 2)
     base = _union([base, divider])
 
     # Intake lip: partition → divider. Exhaust lip: divider → +X inner wall.
     x_part = px + WALL / 2
     x_plus = INNER_X / 2
     for x0, x1 in (
-        (x_part - 0.4, sens_cx + 0.4),
-        (sens_cx - 0.4, x_plus + 0.4),
+        (x_part - 0.4, divider_x + 0.4),
+        (divider_x - 0.4, x_plus + 0.4),
     ):
         base = _union(
             [
@@ -310,10 +318,11 @@ def make_base():
     )
     base = _union([base, sma])
 
-    # Air ports on the TOP (+Y) wall: intake (left of divider) and exhaust (right)
+    # Air ports on the TOP (+Y) wall: intake (toward display) and exhaust (fan, far)
     air_z = floor_z + RIDGE_H * 0.55
-    intake_x = sens_cx - SENS_W / 4
-    exhaust_x = sens_cx + SENS_W / 4
+    near_x = sens_cx - SENS_L / 2
+    intake_x = (near_x + divider_x) / 2
+    exhaust_x = (divider_x + far_x) / 2
     for ax in (intake_x, exhaust_x):
         pad = _filled_pad(
             ax,
@@ -465,7 +474,7 @@ def main():
     _preview(
         base,
         OUT / "preview_base.png",
-        "base — USB bottom, AQI on the floor, channel lips at +Y",
+        "base — USB bottom, AQI on the floor, in/out at top of display",
         elev=28,
         azim=-48,
     )
