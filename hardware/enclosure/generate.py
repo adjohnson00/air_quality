@@ -3,15 +3,15 @@
 
 Layout (display facing +Z):
   LEFT (-X)   antenna RP-SMA bulkhead (filled, drill later)
-  BOTTOM (-Y) USB-C opening (stack connector comes out the bottom)
+  BOTTOM (-Y) closed; STEMMA wall in the sensor bay
   CENTER      1\" Feather + eInk stack over a 1/2\" battery cage
-  RIGHT (+X)  PMSA003I on the FLOOR, 2\" axis away from the display.
-              Two corner holes on the TOP (+Y) edge, third corner at
-              the BOTTOM nearest the display. I/O channels on +Y.
-              Divider is 7/8\" from the far (+X) end.
+  RIGHT (+X)  PMSA003I on the FLOOR, centered on the display in Y.
+              Air-channel lips/divider near the +Y wall. Freestanding
+              -Y lip stops short of the two bottom holes (STEMMA).
 
 Mounting holes and air ports print SOLID at wall thickness with a raised
-ring as a drill guide. USB-C is a real opening.
+ring as a drill guide. No USB opening — plug in with the lid off
+(connector faces the AQI bay).
 
 Lid: display can bolt on the inside (buttons hidden) or the outside
 (buttons accessible). Same four filled bosses.
@@ -33,17 +33,25 @@ LIP_H = 4.5
 LIP_T = 1.3
 
 IN = 25.4
-STACK_H = 1.00 * IN          # screen + Feather + USB out the bottom
+STACK_H = 1.00 * IN          # screen + Feather + USB (lid-off, toward AQI)
 BAT_CAGE_H = 0.50 * IN       # 3/8\" cell, 1/2\" cage
 RIDGE_H = 0.5625 * IN        # 9/16\" snug over the PMSA003I can
 
-WING_L = 79.5
-WING_W = 47.0
-WING_HOLE_DX = 74.3
-WING_HOLE_DY = 42.0
-
-DISP_L = 67.2
-DISP_W = 29.4
+# 2.9" grayscale eInk FeatherWing (Adafruit 4777), from Eagle.
+# PCB 3.125" x 1.850". Holes are a 74.30 x 42.16 mm rectangle, centered.
+# The e-ink MODULE (obstruction) is 79.0 x 36.7 mm — almost the full PCB
+# length, so the four holes sit *inside* that rectangle in X and just
+# outside it in Y (corner tabs). Lid opening is the module, with corner
+# pads unioned back so the holes still have something to screw through.
+WING_L = 79.375
+WING_W = 46.990
+WING_HOLE_DX = 74.295
+WING_HOLE_DY = 42.164
+PANEL_L = 79.0
+PANEL_W = 36.7
+PANEL_OX = 0.16              # panel center − PCB center, along WING_L
+PANEL_OY = -0.10
+TAB_R = 4.2                  # corner pad that holds each hole in the opening
 
 # Pack: 2.00\" x 1-5/16\" x 3/8\". Cage interior adds ~2 mm clearance.
 BAT_L = 52.8
@@ -79,9 +87,6 @@ SMA_DRILL = 6.5
 SMA_PAD = 8.0
 SMA_RING = 10.5
 SMA_Z = BAT_CAGE_H + 10.0    # mid-stack on the left wall
-
-USB_W = 13.0
-USB_H = 8.0
 
 LID_T = 3.2
 POCKET = 1.2                 # inner/outer wing pockets on the lid
@@ -164,9 +169,10 @@ def _bays():
     wing_cx = -INNER_X / 2 + WING_L / 2 + 1.5
     # USB / bottom of the display sits on the -Y wall
     wing_cy = -INNER_Y / 2 + WING_W / 2 + 1.5
-    # Sensor to the right; 2\" axis along +X, shifted -Y so plenums sit at +Y
+    # Sensor to the right, centered on the display in Y so the air-channel
+    # lips sit near the +Y wall and there is room under the module for STEMMA.
     sens_cx = INNER_X / 2 - SENS_L / 2 - 1.0
-    sens_cy = -INNER_Y / 2 + SENS_W / 2 + 2.0
+    sens_cy = wing_cy
     return wing_cx, wing_cy, sens_cx, sens_cy
 
 
@@ -225,21 +231,45 @@ def make_base():
         )
     base = _union([base] + cage)
 
-    # --- partition display | sensor, STEMMA notch at the BOTTOM of the display ---
+    # --- partition display | sensor ---
     px = (wing_cx + WING_L / 2 + sens_cx - SENS_L / 2) / 2
     part_h = INNER_Z - LIP_H - 1
     partition = _box(WALL, INNER_Y - 0.6, part_h, px, 0, floor_z + part_h / 2)
-    _stemma_x, stemma_y = _sens_xy(sens_cx, sens_cy, *SENS_STEMMA)
+    stemma_x, stemma_y = _sens_xy(sens_cx, sens_cy, *SENS_STEMMA)
     notch = _box(
         WALL + 3,
-        12.0,
+        14.0,
         14.0,
         px,
-        stemma_y,
+        stemma_y - 2.0,
         floor_z + 7.0,
     )
     partition = _diff(partition, notch)
     base = _union([base, partition])
+
+    # Freestanding -Y lip, battery-cage style, snug to the module edge.
+    # Stops before the two bottom-side mounting holes so the STEMMA cable
+    # can reach the QT jack. Far +X end kisses the enclosure wall.
+    wall_t = BAT_WALL
+    lip_h = 10.0
+    y_pcb0 = sens_cy - SENS_W / 2
+    lip_y = y_pcb0 - 0.4 - wall_t / 2
+    bot_holes_x = [
+        _sens_xy(sens_cx, sens_cy, hx, hy)[0]
+        for hx, hy, _how in SENS_HOLES
+        if _sens_xy(sens_cx, sens_cy, hx, hy)[1] < sens_cy
+    ]
+    x0 = max(bot_holes_x) + 6.0
+    x1 = INNER_X / 2 + 0.4
+    bot_lip = _box(
+        x1 - x0,
+        wall_t,
+        lip_h,
+        (x0 + x1) / 2,
+        lip_y,
+        floor_z + lip_h / 2,
+    )
+    base = _union([base, bot_lip])
 
     # --- PMSA003I on the floor (no raised shelf) ---
     # Interior rings at all 4 holes so the PCB sits level (~0.4 mm).
@@ -293,17 +323,6 @@ def make_base():
                 _box(x1 - x0, lip_sy, CHANNEL_LIP_T, (x0 + x1) / 2, lip_cy, lip_z),
             ]
         )
-
-    # USB-C — real opening, bottom wall, under the 1\" stack
-    usb = _box(
-        USB_W,
-        WALL + 5,
-        USB_H,
-        wing_cx,
-        -oy / 2,
-        shelf_z + USB_H / 2 + 2.0,
-    )
-    base = _diff(base, usb)
 
     # RP-SMA bulkhead on the LEFT end — filled pad + ring, drill later
     sma = _filled_pad(
@@ -360,8 +379,12 @@ def make_lid():
 
     plate = _box(ox, oy, LID_T, 0, 0, LID_T / 2)
 
-    # Through-window for the active area (works for inside or outside mount)
-    window = _box(DISP_L, DISP_W, LID_T + 4, wing_cx, wing_cy, LID_T / 2)
+    # Through-opening is the e-ink MODULE (79.0 x 36.7), not the glass.
+    # The four holes lie inside that rectangle in X, so they are restored
+    # as corner tabs after the cut.
+    panel_cx = wing_cx + PANEL_OX
+    panel_cy = wing_cy + PANEL_OY
+    window = _box(PANEL_L + 0.6, PANEL_W + 0.8, LID_T + 4, panel_cx, panel_cy, LID_T / 2)
     lid = _diff(plate, window)
 
     # Outer pocket — wing sits here when mounted OUTSIDE (buttons accessible)
@@ -386,19 +409,17 @@ def make_lid():
     )
     lid = _diff(lid, inner_pocket)
 
-    # Filled mounting bosses at the wing hole pattern, both faces get a ring
+    # Corner tabs + filled pads at the real hole pattern, rings both faces
     bosses = []
     for sx in (-1, 1):
         for sy in (-1, 1):
             cx = wing_cx + sx * WING_HOLE_DX / 2
             cy = wing_cy + sy * WING_HOLE_DY / 2
-            pad = _cyl(BOSS_R, LID_T, cx, cy, LID_T / 2)
-            bosses.append(pad)
-            # outer ring
+            bosses.append(_cyl(TAB_R, LID_T, cx, cy, LID_T / 2))
+            bosses.append(_cyl(BOSS_R, LID_T, cx, cy, LID_T / 2))
             o = _cyl(RING_R, RING_H, cx, cy, LID_T + RING_H / 2 - 0.05)
             o = _diff(o, _cyl(BOSS_R + 0.15, RING_H + 0.3, cx, cy, LID_T + RING_H / 2 - 0.05))
             bosses.append(o)
-            # inner ring
             i = _cyl(RING_R, RING_H, cx, cy, -RING_H / 2 + 0.05)
             i = _diff(i, _cyl(BOSS_R + 0.15, RING_H + 0.3, cx, cy, -RING_H / 2 + 0.05))
             bosses.append(i)
@@ -474,14 +495,14 @@ def main():
     _preview(
         base,
         OUT / "preview_base.png",
-        "base — USB bottom, AQI on the floor, in/out at top of display",
+        "base — no USB hole, AQI Y-centered, bottom lip stops at holes",
         elev=28,
         azim=-48,
     )
     _preview(
         lid,
         OUT / "preview_lid.png",
-        "lid — window + inside/outside wing pockets",
+        "lid — module opening + corner hole tabs",
         elev=70,
         azim=-90,
     )
