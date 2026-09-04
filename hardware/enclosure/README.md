@@ -18,7 +18,7 @@ Outside is about **145 × 56 × 45 mm**.
 
 | File | What |
 | --- | --- |
-| [aq_enclosure_base.stl](aq_enclosure_base.stl) | Battery cage, USB opening, SMA pad, sensor shelf + 9/16" ridge, intake/exhaust divider |
+| [aq_enclosure_base.stl](aq_enclosure_base.stl) | Battery cage, USB opening, SMA pad, sensor shelf, intake/exhaust divider, 9/16" channel lips |
 | [aq_enclosure_lid.stl](aq_enclosure_lid.stl) | Window, inner + outer wing pockets, filled mounting bosses |
 | [generate.py](generate.py) | Parametric generator |
 
@@ -31,7 +31,7 @@ Outside is about **145 × 56 × 45 mm**.
   - **Outside** the lid → wing sits in the outer pocket, buttons reachable
 - **RP-SMA** (uFL pigtail, threaded barrel) on the left end. Printed **solid** with a raised ring; drill 6.5 mm after printing.
 - **No printed through-holes** except USB-C. Wing, sensor, SMA, and air ports are filled pads at wall thickness with a raised ring as a drill guide.
-- Sensor is inline to the right. A wall splits **intake** (hole in the blue aluminum) from **exhaust** (black fan). Each path ends at a raised ring on the top wall — drill those after you confirm alignment. A **9/16" ridge** over the module mounting holes sits snug on the can.
+- Sensor is inline to the right. A wall splits **intake** (hole in the blue aluminum) from **exhaust** (black fan). Each path ends at a raised ring on the top wall — drill those after you confirm alignment. The module is **open on top**. A **9/16" lip** overlaps the can by about 3.5 mm and roofs the air channel out to the top wall (not a lid over the whole AQI module).
 
 ## Drill later
 
@@ -50,7 +50,7 @@ Outside is about **145 × 56 × 45 mm**.
 | Layer | 0.20 mm |
 | Walls | 3 |
 | Infill | 20% gyroid |
-| Supports | None |
+| Supports | **On for the base** — normal or tree, from the bed. They fill the intake/exhaust ducts and catch the 3.5 mm overhang onto the can. Pull them before the sensor goes in. Lid: none. |
 | Base | floor down (feet on the bed) |
 | Lid | **outer face / window on the bed** so the outside pocket is smooth |
 
@@ -63,7 +63,7 @@ Lid lip is 0.35 mm undersize (`FIT`). Sand if tight.
 3. STEMMA into I2C2, cable through the partition notch (back/right of the display).
 4. **Inside mount:** seat the wing in the inner lid pocket, glass in the window, screw after drilling. Buttons face the battery cage.
 5. **Outside mount:** seat the wing in the outer lid pocket, glass facing out, buttons on the back of the wing in the open. Screw after drilling.
-6. PMSA003I on the right-hand shelf. Fan toward the **top-right** port, blue intake hole toward the **top-left** port. The ridge should rest on the can. Snap the lid on.
+6. PMSA003I on the right-hand shelf. Fan toward the **top-right** port, blue intake hole toward the **top-left** port. The small 9/16" lips should rest on the +Y edge of the can and cover the air channels; the rest of the module stays open. Snap the lid on.
 7. Drill intake and exhaust only after a dry fit so the holes line up with the fan and the aluminum inlet. Do not let those two volumes mix.
 
 ## Regenerating
@@ -77,6 +77,7 @@ Lid lip is 0.35 mm undersize (`FIT`). Sand if tight.
 | `BAT_L` / `BAT_W` | 52.8 / 35.3 | Cage inside, mm (2.00" × 1-5/16" pack + clearance) |
 | `BAT_CAGE_H` | 12.7 | 1/2" |
 | `STACK_H` | 25.4 | 1" electronics |
-| `RIDGE_H` | 14.3 | 9/16" over the sensor |
+| `RIDGE_H` | 14.3 | 9/16" lip height above the sensor shelf |
+| `CHANNEL_LIP` | 3.5 | how far that lip sits onto the can, mm |
 | `SMA_Z` | cage + 10 | Height of the SMA pad |
 | `FIT` | 0.35 | Lid looseness |

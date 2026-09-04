@@ -56,6 +56,8 @@ SENS_HOLE_DX = 45.7
 SENS_HOLE_DY = 30.5
 GAP = 6.0
 PLENUM = 9.0                 # intake/exhaust channels at +Y of the sensor
+CHANNEL_LIP = 3.5            # how far the 9/16\" lip sits onto the can (not a roof)
+CHANNEL_LIP_T = 1.8          # lip thickness; roofs the air channel only
 
 # RP-SMA bulkhead: ~6.5 mm drill, 1/4-36 thread. Print filled.
 SMA_DRILL = 6.5
@@ -212,34 +214,45 @@ def make_base():
             )
     base = _union([base] + pads)
 
-    # Ridge ~9/16\" above the mounting-hole plane, snug on the can
-    # Three walls + a top bar over the can (open toward +Y plenums)
-    rh = RIDGE_H
-    rz = shelf_z + rh / 2
-    ridge = [
-        _box(SENS_L + 2, 1.8, rh, sens_cx, sens_cy - SENS_W / 2 - 0.7, rz),
-        _box(1.8, SENS_W + 2, rh, sens_cx - SENS_L / 2 - 0.7, sens_cy, rz),
-        _box(1.8, SENS_W + 2, rh, sens_cx + SENS_L / 2 + 0.7, sens_cy, rz),
-        # top bar (ceiling) over the module, 1.6 mm thick
-        _box(SENS_L + 2, SENS_W + 1, 1.6, sens_cx, sens_cy, shelf_z + rh + 0.8),
-    ]
-    base = _union([base] + ridge)
+    # Air ducts at +Y of the sensor. The module itself is OPEN on top.
+    # A 9/16" lip sits a few mm onto the can and roofs the plenum to the
+    # +Y wall. Each roof is a bridge: intake = partition→divider, exhaust
+    # = divider→+X wall, both fused into the +Y wall. Slicer supports fill
+    # the ducts and the 3.5 mm overhang onto the can; pull them before assembly.
+    y_can = sens_cy + SENS_W / 2
+    y_inner = INNER_Y / 2
+    wall_t = 1.8
+    into_wall = 1.0
 
-    # Divider: splits intake (blue hole, -X half of sensor) from
-    # exhaust (black fan, +X half). Both plenums open to +Y.
-    div_y = (sens_cy + SENS_W / 2 + (INNER_Y / 2)) / 2
-    divider = _box(
-        1.8,
-        INNER_Y / 2 - (sens_cy + SENS_W / 2) + 4,
-        rh + 2,
-        sens_cx,
-        div_y,
-        shelf_z + (rh + 2) / 2,
-    )
+    lip_y0 = y_can - CHANNEL_LIP
+    lip_y1 = y_inner + into_wall
+    lip_sy = lip_y1 - lip_y0
+    lip_cy = (lip_y0 + lip_y1) / 2
+    lip_top = shelf_z + RIDGE_H + CHANNEL_LIP_T
+    lip_z = lip_top - CHANNEL_LIP_T / 2
+
+    # Divider lives in the plenum only (not through the can). A 0.6 mm
+    # kiss onto the +Y face seals intake from exhaust at the I/O.
+    duct_h = lip_top - floor_z
+    div_y0 = y_can - 0.6
+    div_sy = lip_y1 - div_y0
+    div_cy = (div_y0 + lip_y1) / 2
+    divider = _box(wall_t, div_sy, duct_h, sens_cx, div_cy, floor_z + duct_h / 2)
     base = _union([base, divider])
 
-    # Plenum walls at +Y so each path only exits through its drill pad
-    # (the outer +Y wall of the enclosure is the exit; pads mark drill spots)
+    # Intake lip: partition → divider. Exhaust lip: divider → +X inner wall.
+    x_part = px + WALL / 2
+    x_plus = INNER_X / 2
+    for x0, x1 in (
+        (x_part - 0.4, sens_cx + 0.4),
+        (sens_cx - 0.4, x_plus + 0.4),
+    ):
+        base = _union(
+            [
+                base,
+                _box(x1 - x0, lip_sy, CHANNEL_LIP_T, (x0 + x1) / 2, lip_cy, lip_z),
+            ]
+        )
 
     # USB-C — real opening, bottom wall, under the 1\" stack
     usb = _box(
@@ -363,9 +376,40 @@ def make_lid():
     lip = _diff(lip, lip_in)
     lid = _union([lid, lip])
 
-    # Clearance over the sensor ridge (lid must not crush the 9/16\" bar)
+    # Clearance over the 9/16\" channel lips (lid must not crush them).
     # No extra vents — air goes through the drilled ports in the base.
     return lid
+
+
+def _preview(mesh, path, title, elev=22, azim=-50):
+    """Translucent matplotlib snapshot so the README shows the current STL."""
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
+    fig = plt.figure(figsize=(9.5, 7.5))
+    ax = fig.add_subplot(111, projection="3d")
+    faces = mesh.triangles
+    if len(faces) > 9000:
+        rng = np.random.default_rng(0)
+        faces = faces[rng.choice(len(faces), 9000, replace=False)]
+    coll = Poly3DCollection(
+        faces,
+        alpha=0.38,
+        facecolor="#5b8fc9",
+        edgecolor="#2a4a68",
+        linewidths=0.07,
+    )
+    ax.add_collection3d(coll)
+    c = np.array(mesh.centroid, dtype=float)
+    m = float(np.max(mesh.extents)) * 0.58
+    ax.set_xlim(c[0] - m, c[0] + m)
+    ax.set_ylim(c[1] - m, c[1] + m)
+    ax.set_zlim(c[2] - m, c[2] + m)
+    ax.view_init(elev=elev, azim=azim)
+    ax.set_axis_off()
+    ax.set_title(title)
+    fig.savefig(path, dpi=110, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
 
 
 def main():
@@ -385,6 +429,22 @@ def main():
           "watertight", base.is_watertight, "ext", np.round(base.extents, 1))
     print("wrote", lid_path.name, f"{lid_path.stat().st_size / 1024:.0f} KB",
           "watertight", lid.is_watertight, "ext", np.round(lid.extents, 1))
+    print("previews...")
+    _preview(
+        base,
+        OUT / "preview_base.png",
+        "base — USB bottom, SMA left, channel lips over the AQI ports",
+        elev=28,
+        azim=-48,
+    )
+    _preview(
+        lid,
+        OUT / "preview_lid.png",
+        "lid — window + inside/outside wing pockets",
+        elev=70,
+        azim=-90,
+    )
+    print("wrote preview_base.png preview_lid.png")
 
 
 if __name__ == "__main__":
